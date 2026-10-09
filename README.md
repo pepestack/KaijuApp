@@ -1,4 +1,4 @@
-# KaijuApp — GrupoX
+# KaijuApp — Grupo Vio Coders
 
 **Integrantes:** 
 - José Calderón
