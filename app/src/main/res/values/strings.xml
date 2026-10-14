@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">KaijuApp</string>
+    <string name="stock_bajo">Stock bajo</string>
+    <string name="stock_suficiente">Stock suficiente</string>
+    <string name="producto_codigo">Código: %1$s</string>
+    <string name="producto_categoria">Categoría: %1$s</string>
+    <string name="producto_stock">Disponibles: %1$d unidades</string>
 </resources>
