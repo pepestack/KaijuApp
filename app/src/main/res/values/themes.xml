@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.KaijuApp" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.KaijuApp" parent="android:Theme.Material.NoActionBar">
+        <!-- Matches KaijuBlack so there is no white flash before Compose draws -->
+        <item name="android:windowBackground">@color/kaiju_black</item>
+    </style>
 </resources>

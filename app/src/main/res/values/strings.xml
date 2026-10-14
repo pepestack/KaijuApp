@@ -5,4 +5,79 @@
     <string name="producto_codigo">Código: %1$s</string>
     <string name="producto_categoria">Categoría: %1$s</string>
     <string name="producto_stock">Disponibles: %1$d unidades</string>
+
+    <!-- Comunes -->
+    <string name="volver">Volver</string>
+    <string name="campo_con_error">Campo con error</string>
+
+    <!-- Roles y tipos de movimiento -->
+    <string name="rol_administrador">Administrador</string>
+    <string name="rol_vendedor">Personal de venta</string>
+    <string name="rol_encargado_inventario">Encargado de inventario</string>
+    <string name="tipo_entrada">Entrada</string>
+    <string name="tipo_salida_venta">Salida por venta</string>
+    <string name="tipo_salida_consumo">Salida por consumo</string>
+    <string name="tipo_ajuste">Ajuste</string>
+
+    <!-- Login -->
+    <string name="login_titulo">KAIJU</string>
+    <string name="login_subtitulo">Inventario de serigrafía. Elige un usuario de prueba para ingresar.</string>
+    <string name="login_ingresar">Ingresar</string>
+
+    <!-- Catálogo -->
+    <string name="catalogo_titulo">Catálogo</string>
+    <string name="catalogo_buscar">Buscar por nombre o código</string>
+    <string name="catalogo_limpiar_busqueda">Limpiar búsqueda</string>
+    <string name="catalogo_todas">Todas</string>
+    <string name="catalogo_nuevo_producto">Nuevo producto</string>
+    <string name="catalogo_vacio">No hay productos que coincidan con la búsqueda.</string>
+    <plurals name="catalogo_resultados">
+        <item quantity="one">%d producto</item>
+        <item quantity="other">%d productos</item>
+    </plurals>
+
+    <!-- Detalle -->
+    <string name="detalle_editar">Editar producto</string>
+    <string name="detalle_tipo">Tipo: %1$s</string>
+    <string name="detalle_disponible">Disponible</string>
+    <string name="detalle_unidades">unidades</string>
+    <string name="detalle_stock_minimo">Mínimo: %1$d</string>
+    <string name="detalle_historial">Historial de movimientos</string>
+    <string name="detalle_historial_vacio">Este producto todavía no tiene movimientos.</string>
+    <string name="detalle_usuario_desconocido">Usuario #%1$d</string>
+    <string name="detalle_motivo">Motivo: %1$s</string>
+
+    <!-- Formulario de producto -->
+    <string name="formulario_producto_nuevo">Nuevo producto</string>
+    <string name="formulario_producto_editar">Editar producto</string>
+    <string name="campo_codigo">Código</string>
+    <string name="campo_codigo_bloqueado">El código no se puede cambiar</string>
+    <string name="campo_nombre">Nombre</string>
+    <string name="campo_descripcion">Descripción</string>
+    <string name="campo_categoria">Categoría</string>
+    <string name="campo_tipo">Tipo</string>
+    <string name="campo_precio">Precio (CLP)</string>
+    <string name="campo_stock_actual">Stock actual</string>
+    <string name="campo_stock_actual_bloqueado">Se modifica registrando movimientos</string>
+    <string name="campo_stock_minimo">Stock mínimo</string>
+    <string name="campo_detalle">Detalle (talla, color, lote…)</string>
+    <string name="formulario_producto_crear">Crear producto</string>
+    <string name="formulario_producto_guardar">Guardar cambios</string>
+
+    <!-- Movimiento -->
+    <string name="movimiento_titulo">Registrar movimiento</string>
+    <string name="campo_producto">Producto</string>
+    <string name="campo_tipo_movimiento">Tipo de movimiento</string>
+    <string name="campo_cantidad">Cantidad</string>
+    <string name="campo_motivo_obligatorio">Motivo (obligatorio)</string>
+    <string name="campo_motivo_opcional">Motivo (opcional)</string>
+    <string name="movimiento_registrar">Registrar movimiento</string>
+
+    <!-- Alertas -->
+    <string name="alertas_titulo">Alertas de stock</string>
+    <string name="alertas_vacio">Ningún producto está en stock bajo.</string>
+    <plurals name="alertas_cantidad">
+        <item quantity="one">%d producto con stock bajo</item>
+        <item quantity="other">%d productos con stock bajo</item>
+    </plurals>
 </resources>
