@@ -35,6 +35,11 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
     private val _errorOperacion = MutableStateFlow<String?>(null)
     val errorOperacion = _errorOperacion.asStateFlow()
 
+    // producto que acaba de pasar a alerta (rn-06) o null si no hay nada que avisar
+    // el viewmodel no notifica porque no tiene context solo avisa y la ui muestra la notificacion
+    private val _productoEnAlerta = MutableStateFlow<Producto?>(null)
+    val productoEnAlerta = _productoEnAlerta.asStateFlow()
+
     fun prepararNuevoProducto() {
         codigoEnEdicion = null
         _esEdicion.value = false
@@ -195,8 +200,20 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         // Llamada síncrona desde UI: sin launch ni suspensiones entre validar y registrar.
         repository.registrarMovimiento(producto.codigo, tipo, cantidad,
             estado.motivo.trim().ifBlank { null }, usuario!!.id, nuevoStock)
+        // producto es el antes y actualizado es el despues del movimiento
+        // solo se avisa cuando pasa de no alerta a alerta asi no se repite en cada salida
+        val actualizado = repository.buscarProducto(producto.codigo)
+        if (!producto.enAlerta && actualizado != null && actualizado.enAlerta) {
+            _productoEnAlerta.value = actualizado
+        }
         limpiarFormularioMovimiento()
         return true
+    }
+
+    // la ui la llama despues de mostrar la notificacion
+    // vuelve a null para que al girar el celular o redibujar no se notifique dos veces
+    fun notificacionMostrada() {
+        _productoEnAlerta.value = null
     }
 
     val estadoCatalogo: StateFlow<CatalogoEstado> = combine(

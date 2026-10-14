@@ -1,5 +1,10 @@
 package cl.kaiju.kaijuapp.navigation
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -21,7 +26,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -32,6 +39,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.Rol
+import cl.kaiju.kaijuapp.notificaciones.Notificador
 import cl.kaiju.kaijuapp.repository.InventarioRepository
 import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
 import cl.kaiju.kaijuapp.ui.screen.PantallaCatalogo
@@ -85,6 +93,47 @@ fun AppNavHost(repository: InventarioRepository) {
     val rol = sesion.rolActivo
     val esAdmin = rol == Rol.ADMINISTRADOR
 
+    // LocalContext.current es el context de la pantalla
+    // se usa applicationContext porque vive toda la app y no se pierde al girar
+    // remember crea un solo notificador y no uno nuevo en cada redibujo
+    val context = LocalContext.current
+    val notificador = remember { Notificador(context.applicationContext) }
+    val productoEnAlerta by inventarioViewModel.productoEnAlerta.collectAsState()
+
+    // cuando el viewmodel avisa que un producto paso a alerta se notifica
+    // y luego se consume el aviso para no notificarlo de nuevo
+    LaunchedEffect(productoEnAlerta) {
+        productoEnAlerta?.let {
+            notificador.alertaStock(it)
+            inventarioViewModel.notificacionMostrada()
+        }
+    }
+
+    // launcher que abre el dialogo del sistema para pedir el permiso
+    // el bloque recibe true si lo acepto y false si lo rechazo
+    // si lo rechaza no se bloquea nada solo se le recuerda la alternativa (pantalla de alertas)
+    val mensajePermisoRechazado = stringResource(R.string.permiso_notificaciones_rechazado)
+    val lanzadorPermiso = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { aceptado ->
+        if (!aceptado) scope.launch { snackbarHostState.showSnackbar(mensajePermisoRechazado) }
+    }
+
+    // se pide al iniciar sesion y no al abrir la app asi el usuario entiende para que es
+    // solo para encargado y admin que son los que necesitan las alertas
+    // solo en android 13 o mas porque antes el permiso no existe
+    // si ya lo tiene no se vuelve a pedir y si lo rechazo dos veces android ya no muestra el dialogo
+    LaunchedEffect(rol) {
+        val necesitaAlertas = rol == Rol.ADMINISTRADOR || rol == Rol.ENCARGADO_INVENTARIO
+        if (necesitaAlertas &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            lanzadorPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     // las alertas son solo para el encargado y el administrador (rf-09)
     // si no corresponde el item queda null y listOfNotNull lo descarta
     val itemsBarra = listOfNotNull(
@@ -95,7 +144,7 @@ fun AppNavHost(repository: InventarioRepository) {
         else null
     )
 
-    // ruta de la pantalla actual se usa para marcar la pestana activa
+    // ruta de la pantalla actual se usa para marcar la pestaña activa
     // la barra solo se muestra en catalogo movimiento y alertas no en login detalle ni formulario
     val backStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = backStackEntry?.destination?.route

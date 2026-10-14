@@ -89,4 +89,7 @@
 
     <!-- Notificaciones -->
     <string name="canal_alertas_nombre">Alertas de stock</string>
+    <string name="notificacion_stock_titulo">Stock bajo: %1$s</string>
+    <string name="notificacion_stock_texto">Quedan %1$d unidades (mínimo %2$d)</string>
+    <string name="permiso_notificaciones_rechazado">Sin notificaciones: revisa el stock bajo en Alertas</string>
 </resources>
