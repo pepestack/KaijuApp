@@ -33,6 +33,13 @@ private val KaijuDarkColorScheme = darkColorScheme(
     onSurface = StarkWhite,
     surfaceVariant = KaijuSurfaceVariant,
     onSurfaceVariant = MutedGrey,
+    // Cards use surfaceContainerHighest, menus and sheets the lower tones. It must not equal
+    // surfaceVariant: contentColorFor() would match that first and give cards grey text.
+    surfaceContainerLowest = KaijuBlack,
+    surfaceContainerLow = Color(0xFF121118),
+    surfaceContainer = KaijuCharcoal,
+    surfaceContainerHigh = Color(0xFF1D1C26),
+    surfaceContainerHighest = Color(0xFF22202C),
 
     error = SilksongCrimson,
     onError = Color.White,
@@ -63,6 +70,11 @@ private val KaijuLightColorScheme = lightColorScheme(
     onSurface = KaijuBlack,
     surfaceVariant = Color(0xFFE6E4F0),
     onSurfaceVariant = Color(0xFF4A4754),
+    surfaceContainerLowest = LightSurface,
+    surfaceContainerLow = Color(0xFFF9F9FC),
+    surfaceContainer = Color(0xFFF1F0F6),
+    surfaceContainerHigh = Color(0xFFEBEAF2),
+    surfaceContainerHighest = Color(0xFFE8E6F1),
 
     error = SilksongCrimson,
     onError = Color.White,

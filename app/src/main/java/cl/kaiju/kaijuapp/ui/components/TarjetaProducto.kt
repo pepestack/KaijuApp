@@ -8,7 +8,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,9 +15,6 @@ import androidx.compose.ui.unit.dp
 import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.ui.theme.KaijuAppTheme
-import java.text.NumberFormat
-import java.util.Currency
-import java.util.Locale
 
 /** Recibe datos y avisa del clic; la pantalla decide cómo abrir el detalle. */
 @Composable
@@ -27,13 +23,7 @@ fun TarjetaProducto(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val formatoPrecio = remember {
-        NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CL")).apply {
-            currency = Currency.getInstance("CLP")
-            minimumFractionDigits = 0
-            maximumFractionDigits = 0
-        }
-    }
+    val formatoPrecio = rememberFormatoPrecio()
 
     Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
         Column(
@@ -43,7 +33,7 @@ fun TarjetaProducto(
             Text(text = producto.nombre, style = MaterialTheme.typography.titleMedium)
             Text(
                 text = stringResource(R.string.producto_codigo, producto.codigo),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(

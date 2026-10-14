@@ -53,9 +53,9 @@ val KaijuTypography = Typography(
         lineHeight = 20.sp,
         letterSpacing = 0.25.sp
     ),
-    // Product codes on cards (e.g., "Código: PRD-001")
+    // Supporting text under fields (errors, hints)
     bodySmall = TextStyle(
-        fontFamily = KaijuMonoFont,
+        fontFamily = KaijuBodyFont,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp,
