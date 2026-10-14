@@ -8,7 +8,7 @@ sealed class Rutas (val ruta: String) {
     object Detalle : Rutas("detalle/{codigo}") {
         fun crearRuta(codigo: String) = "detalle/$codigo"
     }
-    object Movimiento : Rutas("movimiento/{codigo}")
+    object Movimiento : Rutas("movimiento")
 
     object Formulario : Rutas("formulario?codigo={codigo}") {
         fun crearRuta(codigo: String? = null) = if(codigo == null) "formulario" else "formulario?codigo=$codigo"
