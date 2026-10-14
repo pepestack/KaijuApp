@@ -72,6 +72,7 @@
     <string name="campo_motivo_obligatorio">Motivo (obligatorio)</string>
     <string name="campo_motivo_opcional">Motivo (opcional)</string>
     <string name="movimiento_registrar">Registrar movimiento</string>
+    <string name="movimiento_registrado">Movimiento registrado</string>
 
     <!-- Alertas -->
     <string name="alertas_titulo">Alertas de stock</string>
@@ -85,4 +86,7 @@
     <string name="nav_catalogo">Catálogo</string>
     <string name="nav_movimiento">Movimiento</string>
     <string name="nav_alertas">Alertas</string>
+
+    <!-- Notificaciones -->
+    <string name="canal_alertas_nombre">Alertas de stock</string>
 </resources>
