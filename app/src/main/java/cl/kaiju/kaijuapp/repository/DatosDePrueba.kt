@@ -108,7 +108,7 @@ object DatosDePrueba {
             categoria = "Polera",
             tipo = "Vestuario",
             precio = 13990,
-            stockActual = 1,
+            stockActual = 0,
             stockMinimo = 5,
             detalle = "Talla L oversize, negra"
         ),
