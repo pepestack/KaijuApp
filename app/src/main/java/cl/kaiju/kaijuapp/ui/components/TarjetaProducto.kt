@@ -41,6 +41,13 @@ fun TarjetaProducto(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(text = producto.nombre, style = MaterialTheme.typography.titleMedium)
+            producto.detalle?.takeIf { it.isNotBlank() }?.let { detalle ->
+                Text(
+                    text = detalle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Text(
                 text = stringResource(R.string.producto_codigo, producto.codigo),
                 style = MaterialTheme.typography.bodySmall,
@@ -78,7 +85,8 @@ private fun TarjetaProductoPreview() {
                 tipo = "Polera",
                 precio = 12990,
                 stockActual = 3,
-                stockMinimo = 5
+                stockMinimo = 5,
+                detalle = "Talla M, negra"
             ),
             onClick = {},
             modifier = Modifier.padding(16.dp)
