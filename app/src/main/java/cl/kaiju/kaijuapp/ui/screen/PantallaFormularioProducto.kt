@@ -146,6 +146,7 @@ fun PantallaFormularioProducto(
                 valor = estado.stockActual,
                 onValorChange = onStockActualChange,
                 etiqueta = stringResource(R.string.campo_stock_actual),
+                error = errores.stockActual,
                 icono = Icons.Filled.Home,
                 ayuda = if (esEdicion) stringResource(R.string.campo_stock_actual_bloqueado) else null,
                 tipoTeclado = KeyboardType.Number,
