@@ -9,7 +9,7 @@ object DatosDePrueba {
     val usuarios = listOf(
         Usuario(id = 1, nombre = "Alejandro Carrasco", rol = Rol.ADMINISTRADOR),
         Usuario(id = 2, nombre = "Esteban Hernandez", rol = Rol.ENCARGADO_INVENTARIO),
-        Usuario(id = 1, nombre = "Ignacia Diaz", rol = Rol.VENDEDOR)
+        Usuario(id = 3, nombre = "Ignacia Diaz", rol = Rol.VENDEDOR)
     )
 
     val productos = listOf(
@@ -98,7 +98,7 @@ object DatosDePrueba {
             tipo = "Vestuario",
             precio = 12990,
             stockActual = 15,
-            stockMinimo = 5,
+            stockMinimo = 1,
             detalle = "Talla XL, negra"
         ),
         Producto(
@@ -109,7 +109,7 @@ object DatosDePrueba {
             tipo = "Vestuario",
             precio = 12990,
             stockActual = 15,
-            stockMinimo = 5,
+            stockMinimo = 2,
             detalle = "Talla L oversize, negra"
         ),
         Producto(
@@ -119,9 +119,9 @@ object DatosDePrueba {
             categoria = "Ropa",
             tipo = "Vestuario",
             precio = 12990,
-            stockActual = 15,
+            stockActual = 3,
             stockMinimo = 5,
-            detalle = "Talla XL oversize, negra "
+            detalle = "Talla XL oversize, negra"
         ),
 
     )
