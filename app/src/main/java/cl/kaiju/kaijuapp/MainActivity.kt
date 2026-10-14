@@ -19,6 +19,9 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             KaijuAppTheme {
+                // la activity solo carga el navhost toda la navegacion vive ahi
+                // application es la KaijuApplication que creo android y el as le dice a kotlin de que tipo es
+                // asi se le puede pedir el repository unico
                 AppNavHost(repository = (application as KaijuApplication).repository)
             }
         }
