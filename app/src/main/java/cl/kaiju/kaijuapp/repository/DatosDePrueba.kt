@@ -97,8 +97,8 @@ object DatosDePrueba {
             categoria = "Ropa",
             tipo = "Vestuario",
             precio = 12990,
-            stockActual = 15,
-            stockMinimo = 1,
+            stockActual = 2,
+            stockMinimo = 5,
             detalle = "Talla XL, negra"
         ),
         Producto(
@@ -108,8 +108,8 @@ object DatosDePrueba {
             categoria = "Ropa",
             tipo = "Vestuario",
             precio = 12990,
-            stockActual = 15,
-            stockMinimo = 2,
+            stockActual = 1,
+            stockMinimo = 5,
             detalle = "Talla L oversize, negra"
         ),
         Producto(
