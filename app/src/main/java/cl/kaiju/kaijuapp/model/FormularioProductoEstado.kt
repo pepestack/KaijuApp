@@ -18,5 +18,6 @@ data class FormularioProductoErrores(
     val nombre: String? = null,
     val categoria: String? = null,
     val precio: String? = null,
-    val stockMinimo: String? = null
+    val stockMinimo: String? = null,
+    val stockActual: String? = null
 )

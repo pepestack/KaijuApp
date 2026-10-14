@@ -8,11 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-/**
- * Ingreso de prueba para el MVP: recibe usuarios ficticios desde la pantalla.
- * No autentica credenciales ni almacena la sesión al cerrar el proceso.
- * Las pantallas deben compartir esta instancia desde AppNavHost.
- */
+
 class SesionViewModel : ViewModel() {
     private val _estado = MutableStateFlow(SesionEstado())
     val estado: StateFlow<SesionEstado> = _estado.asStateFlow()
@@ -23,7 +19,6 @@ class SesionViewModel : ViewModel() {
         }
     }
 
-    /** Valida la selección antes de activar el perfil, como pide RF-01. */
     fun iniciarSesion(): Boolean {
         val usuario = _estado.value.usuarioSeleccionado
         if (usuario == null) {
