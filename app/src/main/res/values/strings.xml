@@ -80,4 +80,9 @@
         <item quantity="one">%d producto con stock bajo</item>
         <item quantity="other">%d productos con stock bajo</item>
     </plurals>
+
+    <!-- Barra de navegación inferior -->
+    <string name="nav_catalogo">Catálogo</string>
+    <string name="nav_movimiento">Movimiento</string>
+    <string name="nav_alertas">Alertas</string>
 </resources>
