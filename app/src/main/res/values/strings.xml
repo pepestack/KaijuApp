@@ -8,6 +8,7 @@
 
     <!-- Comunes -->
     <string name="volver">Volver</string>
+    <string name="cerrar_sesion">Cerrar sesión</string>
     <string name="campo_con_error">Campo con error</string>
 
     <!-- Roles y tipos de movimiento -->
