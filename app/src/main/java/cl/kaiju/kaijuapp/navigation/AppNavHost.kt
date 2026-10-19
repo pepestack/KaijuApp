@@ -163,6 +163,23 @@ fun AppNavHost(repository: InventarioRepository) {
                         // si se preparara al abrir la pantalla girar el celular borraria lo escrito
                         inventarioViewModel.prepararNuevoProducto()
                         navController.navigate(Rutas.Formulario.crearRuta())
+                    },
+                    //De acá para abajo se modificó para la implementación del botón de salir
+                    onCerrarSesion = {
+                        inventarioViewModel.limpiarFiltros()
+                        inventarioViewModel.prepararNuevoProducto()
+                        inventarioViewModel.limpiarFormularioMovimiento()
+                        sesionViewModel.cerrarSesion()
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        // Descarta también las pilas guardadas al cambiar de pestaña.
+                        // El siguiente perfil conserva el inventario, pero no la navegación anterior.
+                        listOf(Rutas.Catalogo, Rutas.Movimiento, Rutas.Alertas).forEach {
+                            navController.clearBackStack(it.ruta)
+                        }
+                        navController.navigate(Rutas.Login.ruta) {
+                            popUpTo(navController.graph.id) { inclusive = false }
+                            launchSingleTop = true
+                        }
                     }
                 )
             }

@@ -1,10 +1,12 @@
 package cl.kaiju.kaijuapp.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -26,6 +28,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
@@ -54,15 +57,29 @@ fun PantallaCatalogo(
     puedeCrear: Boolean,
     onProductoClick: (String) -> Unit,
     onNuevoProducto: () -> Unit,
+    onCerrarSesion: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         modifier = modifier,
         topBar = { TopAppBar(title = { Text(stringResource(R.string.catalogo_titulo)) }) },
         floatingActionButton = {
-            if (puedeCrear) {
-                FloatingActionButton(onClick = onNuevoProducto) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.catalogo_nuevo_producto))
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                FloatingActionButton(
+                    onClick = onCerrarSesion,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_logout),
+                        contentDescription = stringResource(R.string.cerrar_sesion),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                if (puedeCrear) {
+                    FloatingActionButton(onClick = onNuevoProducto) {
+                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.catalogo_nuevo_producto))
+                    }
                 }
             }
         }
@@ -71,8 +88,11 @@ fun PantallaCatalogo(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            // Espacio inferior para que el botón flotante no tape la última tarjeta
-            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 88.dp),
+            // Deja espacio para los dos botones del administrador o el único de otros perfiles.
+            contentPadding = PaddingValues(
+                start = 16.dp, top = 8.dp, end = 16.dp,
+                bottom = if (puedeCrear) 156.dp else 88.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
@@ -147,7 +167,8 @@ private fun PantallaCatalogoPreview() {
             onCategoriaChange = {},
             puedeCrear = true,
             onProductoClick = {},
-            onNuevoProducto = {}
+            onNuevoProducto = {},
+            onCerrarSesion = {}
         )
     }
 }
@@ -165,7 +186,8 @@ private fun PantallaCatalogoVaciaPreview() {
             onCategoriaChange = {},
             puedeCrear = false,
             onProductoClick = {},
-            onNuevoProducto = {}
+            onNuevoProducto = {},
+            onCerrarSesion = {}
         )
     }
 }
