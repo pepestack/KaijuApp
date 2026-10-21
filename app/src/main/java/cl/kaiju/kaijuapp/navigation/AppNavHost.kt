@@ -46,7 +46,6 @@ import kotlinx.coroutines.launch
 // una pestana de la barra inferior con su ruta su texto y su icono
 private data class ItemBarra(val ruta: Rutas, val etiqueta: Int, val icono: ImageVector)
 
-// conecta todo las pantallas de jose con los viewmodels de apablaza
 // las pantallas no saben nada de viewmodels reciben datos por parametro y avisan eventos con lambdas
 @Composable
 fun AppNavHost(repository: InventarioRepository) {

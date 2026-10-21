@@ -5,23 +5,23 @@ package cl.kaiju.kaijuapp.navigation
 sealed class Rutas (val ruta: String) {
 
     // rutas sin argumento
-    object Catalogo : Rutas("catalogo")
-    object Login : Rutas("login")
-    object Alertas : Rutas("alertas")
+    data object Catalogo : Rutas("catalogo")
+    data object Login : Rutas("login")
+    data object Alertas : Rutas("alertas")
 
     // {codigo} es un hueco obligatorio el patron detalle/{codigo} acepta detalle/P008
     // crearRuta arma el string concreto para que nadie lo escriba a mano
-    object Detalle : Rutas("detalle/{codigo}") {
+    data object Detalle : Rutas("detalle/{codigo}") {
         fun crearRuta(codigo: String) = "detalle/$codigo"
     }
 
     // sin argumento porque la pantalla de movimiento tiene su propio selector de producto
-    object Movimiento : Rutas("movimiento")
+    data object Movimiento : Rutas("movimiento")
 
     // ?codigo={codigo} es un argumento opcional
     // sin codigo es crear producto y con codigo es editar ese producto
     // si es null no se agrega nada porque si no quedaria el texto "null" en la ruta
-    object Formulario : Rutas("formulario?codigo={codigo}") {
+    data object Formulario : Rutas("formulario?codigo={codigo}") {
         fun crearRuta(codigo: String? = null) = if(codigo == null) "formulario" else "formulario?codigo=$codigo"
     }
 
