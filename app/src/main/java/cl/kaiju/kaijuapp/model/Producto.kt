@@ -1,7 +1,12 @@
 package cl.kaiju.kaijuapp.model
 
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "productos")
 data class Producto(
-    val codigo: String,
+    @PrimaryKey val codigo: String,
     val nombre: String,
     val descripcion: String,
     val categoria: String,
@@ -11,5 +16,6 @@ data class Producto(
     val stockMinimo: Int,
     val detalle: String? = null
 ) {
+    @get:Ignore
     val enAlerta: Boolean get() = stockActual <= stockMinimo
 }
