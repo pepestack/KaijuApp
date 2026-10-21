@@ -65,7 +65,8 @@ fun AppNavHost(repository: InventarioRepository) {
     // by permite usar sesion.algo directo sin escribir .value
     val sesion by sesionViewModel.estado.collectAsState()
     val catalogo by inventarioViewModel.estadoCatalogo.collectAsState()
-    val productos by repository.productos.collectAsState()
+    val productos by inventarioViewModel.productos.collectAsState()
+    val usuarios by inventarioViewModel.usuarios.collectAsState()
     val formularioProducto by inventarioViewModel.estadoFormularioProducto.collectAsState()
     val esEdicion by inventarioViewModel.esEdicion.collectAsState()
     val formularioMovimiento by inventarioViewModel.estadoFormularioMovimiento.collectAsState()
@@ -128,12 +129,12 @@ fun AppNavHost(repository: InventarioRepository) {
             // cada composable une una ruta con su pantalla
             composable(Rutas.Login.ruta) {
                 PantallaLogin(
-                    usuarios = repository.usuarios,
+                    usuarios = usuarios,
                     usuarioSeleccionadoId = sesion.usuarioSeleccionado?.id,
                     error = sesion.errorUsuario,
                     // la pantalla entrega el id y find busca el usuario completo que pide el viewmodel
                     onSeleccionarUsuario = { id ->
-                        sesionViewModel.seleccionarUsuario(repository.usuarios.find { it.id == id })
+                        sesionViewModel.seleccionarUsuario(usuarios.find { it.id == id })
                     },
                     // solo navega si el viewmodel dice true la pantalla no decide nada
                     onIngresar = {
@@ -200,12 +201,14 @@ fun AppNavHost(repository: InventarioRepository) {
                 PantallaDetalleProducto(
                     producto = producto,
                     movimientos = historial,
-                    nombresUsuarios = repository.usuarios.associate { it.id to it.nombre },
+                    nombresUsuarios = usuarios.associate { it.id to it.nombre },
                     puedeEditar = esAdmin, // rf-05
                     // carga los datos del producto en el formulario y recien ahi navega
                     onEditar = {
-                        if (inventarioViewModel.prepararEdicionProducto(codigo)) {
-                            navController.navigate(Rutas.Formulario.crearRuta(codigo))
+                        scope.launch {
+                            if (inventarioViewModel.prepararEdicionProducto(codigo)) {
+                                navController.navigate(Rutas.Formulario.crearRuta(codigo))
+                            }
                         }
                     },
                     // popBackStack vuelve a la pantalla anterior
@@ -240,8 +243,10 @@ fun AppNavHost(repository: InventarioRepository) {
                     onDetalleChange = inventarioViewModel::actualizarDetalle,
                     // guardarProducto valida (rn-02 rn-03) y si sale bien vuelve atras
                     onGuardar = {
-                        if (inventarioViewModel.guardarProducto(sesion.usuarioActivo)) {
-                            navController.popBackStack()
+                        scope.launch {
+                            if (inventarioViewModel.guardarProducto(sesion.usuarioActivo)) {
+                                navController.popBackStack()
+                            }
                         }
                     },
                     onVolver = { navController.popBackStack() }
@@ -260,8 +265,10 @@ fun AppNavHost(repository: InventarioRepository) {
                     onMotivoChange = inventarioViewModel::actualizarMotivo,
                     // registrarMovimiento valida (rn-01 rn-04) y si sale bien muestra el mensaje
                     onRegistrar = {
-                        if (inventarioViewModel.registrarMovimiento(sesion.usuarioActivo)) {
-                            scope.launch { snackbarHostState.showSnackbar(mensajeRegistrado) }
+                        scope.launch {
+                            if (inventarioViewModel.registrarMovimiento(sesion.usuarioActivo)) {
+                                snackbarHostState.showSnackbar(mensajeRegistrado)
+                            }
                         }
                     }
                 )

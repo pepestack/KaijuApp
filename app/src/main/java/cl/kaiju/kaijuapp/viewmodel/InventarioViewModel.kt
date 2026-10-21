@@ -14,6 +14,7 @@ import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.model.TipoMovimiento
 import cl.kaiju.kaijuapp.model.Usuario
 import cl.kaiju.kaijuapp.repository.InventarioRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,26 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class InventarioViewModel(private val repository: InventarioRepository) : ViewModel() {
+    val productos = repository.productos.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val usuarios = repository.usuarios.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    private var guardando = false
+
+    // No se confirma ni se limpia el formulario hasta que SQLite termine de guardar.
+    private suspend fun ejecutarGuardado(operacion: suspend () -> Boolean): Boolean {
+        if (guardando) return false
+        guardando = true
+        try {
+            return operacion()
+        } catch (cancelacion: CancellationException) {
+            throw cancelacion
+        } catch (error: Exception) {
+            _errorOperacion.value = "No se pudo guardar. Revisa los datos e intenta nuevamente."
+            return false
+        } finally {
+            guardando = false
+        }
+    }
+
     private val busqueda = MutableStateFlow("")
     private val categoriaSeleccionada = MutableStateFlow<String?>(null)
     private val _estadoFormularioProducto = MutableStateFlow(FormularioProductoEstado())
@@ -42,7 +63,7 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         _errorOperacion.value = null
     }
 
-    fun prepararEdicionProducto(codigo: String): Boolean {
+    suspend fun prepararEdicionProducto(codigo: String): Boolean {
         val producto = repository.buscarProducto(codigo)
         if (producto == null) {
             _errorOperacion.value = "El producto ya no existe"
@@ -75,8 +96,9 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
     fun actualizarStockMinimo(valor: String) = _estadoFormularioProducto.update { it.copy(stockMinimo = valor) }
     fun actualizarDetalle(valor: String) = _estadoFormularioProducto.update { it.copy(detalle = valor) }
 
-    fun validarFormularioProducto(): Boolean {
-        val estado = _estadoFormularioProducto.value
+    suspend fun validarFormularioProducto(
+        estado: FormularioProductoEstado = _estadoFormularioProducto.value
+    ): Boolean {
         val codigo = estado.codigo.trim()
         val errores = FormularioProductoErrores(
             codigo = when {
@@ -85,7 +107,7 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
                 else -> null
             },
             nombre = if (estado.nombre.trim().length < 3) "El nombre debe tener al menos 3 caracteres" else null,
-            categoria = if (estado.categoria !in repository.productos.value.map { it.categoria }) "Elige una categoría de la lista" else null,
+            categoria = if (estado.categoria !in repository.obtenerProductos().map { it.categoria }) "Elige una categoría de la lista" else null,
             precio = if ((estado.precio.trim().toIntOrNull() ?: 0) <= 0) "El precio debe ser un entero mayor que cero" else null,
             stockMinimo = validarStock(estado.stockMinimo),
             stockActual = if (_esEdicion.value) null else validarStock(estado.stockActual)
@@ -99,18 +121,18 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         return if (numero == null || numero < 0) "Debe ser un entero mayor o igual a cero" else null
     }
 
-    fun guardarProducto(usuario: Usuario?): Boolean {
+    suspend fun guardarProducto(usuario: Usuario?): Boolean = ejecutarGuardado {
+        val estado = _estadoFormularioProducto.value
         _errorOperacion.value = null
         if (!usuarioValido(usuario) || usuario?.rol != Rol.ADMINISTRADOR) {
             _errorOperacion.value = "Solo un administrador activo puede guardar productos"
-            return false
+            return@ejecutarGuardado false
         }
-        if (!validarFormularioProducto()) return false
-        val estado = _estadoFormularioProducto.value
-        val anterior = codigoEnEdicion?.let(repository::buscarProducto)
+        if (!validarFormularioProducto(estado)) return@ejecutarGuardado false
+        val anterior = codigoEnEdicion?.let { repository.buscarProducto(it) }
         if (_esEdicion.value && anterior == null) {
             _errorOperacion.value = "El producto ya no existe"
-            return false
+            return@ejecutarGuardado false
         }
         val producto = Producto(
             codigo = anterior?.codigo ?: estado.codigo.trim(), nombre = estado.nombre.trim(),
@@ -121,16 +143,15 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
             stockMinimo = estado.stockMinimo.trim().toInt(), detalle = estado.detalle.trim().ifBlank { null }
         )
         if (anterior != null) {
-            repository.actualizarProducto(producto)
-        } else {
-            repository.agregarProducto(producto.copy(stockActual = 0))
-            if (producto.stockActual > 0) {
-                repository.registrarMovimiento(producto.codigo, TipoMovimiento.ENTRADA,
-                    producto.stockActual, "Stock inicial", usuario!!.id, producto.stockActual)
+            if (!repository.actualizarProducto(producto)) {
+                _errorOperacion.value = "El producto ya no existe"
+                return@ejecutarGuardado false
             }
+        } else {
+            repository.agregarProducto(producto, usuario!!.id)
         }
         prepararNuevoProducto()
-        return true
+        true
     }
 
     fun limpiarFormularioMovimiento() {
@@ -148,12 +169,17 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         null -> emptyList()
     }
 
-    private fun usuarioValido(usuario: Usuario?): Boolean =
-        usuario != null && repository.usuarios.any { it == usuario }
+    private suspend fun usuarioValido(usuario: Usuario?): Boolean =
+        usuario != null && repository.buscarUsuario(usuario.id) == usuario
 
-    fun validarFormularioMovimiento(usuario: Usuario?): Boolean {
+    suspend fun validarFormularioMovimiento(usuario: Usuario?): Boolean {
         val estado = _estadoFormularioMovimiento.value
-        val producto = repository.buscarProducto(estado.codigoProducto)
+        return validarMovimiento(usuario, estado, repository.buscarProducto(estado.codigoProducto))
+    }
+
+    private fun validarMovimiento(
+        usuario: Usuario?, estado: FormularioMovimientoEstado, producto: Producto?
+    ): Boolean {
         val cantidad = estado.cantidad.trim().toIntOrNull()
         val salida = estado.tipo == TipoMovimiento.SALIDA_VENTA || estado.tipo == TipoMovimiento.SALIDA_CONSUMO
         val errores = FormularioMovimientoErrores(
@@ -176,15 +202,16 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         return errores == FormularioMovimientoErrores()
     }
 
-    fun registrarMovimiento(usuario: Usuario?): Boolean {
+    suspend fun registrarMovimiento(usuario: Usuario?): Boolean = ejecutarGuardado {
+        val estado = _estadoFormularioMovimiento.value
         _errorOperacion.value = null
         if (!usuarioValido(usuario)) {
             _errorOperacion.value = "Inicia sesión con un usuario de prueba válido"
-            return false
+            return@ejecutarGuardado false
         }
-        if (!validarFormularioMovimiento(usuario)) return false
-        val estado = _estadoFormularioMovimiento.value
-        val producto = repository.buscarProducto(estado.codigoProducto)!!
+        val producto = repository.buscarProducto(estado.codigoProducto)
+        if (!validarMovimiento(usuario, estado, producto)) return@ejecutarGuardado false
+        checkNotNull(producto)
         val cantidad = estado.cantidad.trim().toInt()
         val tipo = estado.tipo!!
         val nuevoStock = when (tipo) {
@@ -192,11 +219,13 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
             TipoMovimiento.SALIDA_VENTA, TipoMovimiento.SALIDA_CONSUMO -> producto.stockActual - cantidad
             TipoMovimiento.AJUSTE -> cantidad
         }
-        // Llamada síncrona desde UI: sin launch ni suspensiones entre validar y registrar.
-        repository.registrarMovimiento(producto.codigo, tipo, cantidad,
-            estado.motivo.trim().ifBlank { null }, usuario!!.id, nuevoStock)
+        if (!repository.registrarMovimiento(producto.codigo, tipo, cantidad,
+                estado.motivo.trim().ifBlank { null }, usuario!!.id, producto.stockActual, nuevoStock)) {
+            _errorOperacion.value = "El stock cambió. Revisa la cantidad e intenta nuevamente."
+            return@ejecutarGuardado false
+        }
         limpiarFormularioMovimiento()
-        return true
+        true
     }
 
     val estadoCatalogo: StateFlow<CatalogoEstado> = combine(
@@ -206,7 +235,7 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = crearEstado(repository.productos.value, "", null)
+        initialValue = CatalogoEstado()
     )
 
     fun actualizarBusqueda(valor: String) {

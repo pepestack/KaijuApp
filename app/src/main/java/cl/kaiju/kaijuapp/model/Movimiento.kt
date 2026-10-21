@@ -1,11 +1,13 @@
 package cl.kaiju.kaijuapp.model
 
-import java.time.LocalDateTime
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 enum class TipoMovimiento { ENTRADA, SALIDA_VENTA, SALIDA_CONSUMO, AJUSTE }
 
+@Entity(tableName = "movimientos")
 data class Movimiento (
-    val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val codigoProducto: String,
     val tipo: TipoMovimiento,
     val cantidad: Int,

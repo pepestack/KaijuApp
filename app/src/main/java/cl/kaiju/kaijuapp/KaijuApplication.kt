@@ -3,6 +3,7 @@ package cl.kaiju.kaijuapp
 import android.app.Application
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
+import cl.kaiju.kaijuapp.database.KaijuDatabase
 import cl.kaiju.kaijuapp.repository.InventarioRepository
 
 // android crea esta clase una sola vez al abrir la app y vive mientras la app este abierta
@@ -14,7 +15,9 @@ class KaijuApplication : Application() {
     // el unico repository de toda la app asi todas las pantallas ven los mismos datos
     // aqui y no con remember porque remember se pierde al girar el celular
     // by lazy lo crea recien la primera vez que alguien lo usa y despues devuelve siempre el mismo
-    val repository by lazy { InventarioRepository() }
+    val repository by lazy {
+        InventarioRepository(KaijuDatabase.obtenerInstancia(this).inventarioDao())
+    }
 
     // se ejecuta una vez al iniciar la app
     override fun onCreate() {
