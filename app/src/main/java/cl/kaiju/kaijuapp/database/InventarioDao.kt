@@ -27,6 +27,9 @@ abstract class InventarioDao {
     @Query("SELECT * FROM productos WHERE codigo = :codigo")
     abstract suspend fun buscarProducto(codigo: String): Producto?
 
+    @Query("SELECT * FROM productos WHERE codigoBarras = :codigoBarras")
+    abstract suspend fun buscarPorCodigoBarras(codigoBarras: String): Producto?
+
     @Query("SELECT * FROM productos ORDER BY codigo")
     abstract suspend fun obtenerProductos(): List<Producto>
 
@@ -45,10 +48,11 @@ abstract class InventarioDao {
     // Editar datos descriptivos nunca sobrescribe el stock actualizado por un movimiento.
     @Query("""UPDATE productos SET nombre = :nombre, descripcion = :descripcion,
         categoria = :categoria, tipo = :tipo, precio = :precio,
-        stockMinimo = :stockMinimo, detalle = :detalle WHERE codigo = :codigo""")
+        stockMinimo = :stockMinimo, detalle = :detalle, codigoBarras = :codigoBarras
+        WHERE codigo = :codigo""")
     abstract suspend fun actualizarDatosProducto(
         codigo: String, nombre: String, descripcion: String, categoria: String,
-        tipo: String, precio: Int, stockMinimo: Int, detalle: String?
+        tipo: String, precio: Int, stockMinimo: Int, detalle: String?, codigoBarras: String?
     ): Int
 
     // Control de concurrencia en SQLite: no se escribe sobre un stock que ya cambió.

@@ -21,12 +21,18 @@ open class FakeInventarioDao(
     override fun observarHistorial(codigo: String) =
         movimientos.map { lista -> lista.filter { it.codigoProducto == codigo } }
     override suspend fun buscarProducto(codigo: String) = productos.value.find { it.codigo == codigo }
+    override suspend fun buscarPorCodigoBarras(codigoBarras: String) =
+        productos.value.find { it.codigoBarras == codigoBarras }
     override suspend fun obtenerProductos() = productos.value
     override suspend fun obtenerCategorias() = productos.value.map { it.categoria }.distinct()
     override suspend fun buscarUsuario(id: Int) = usuarios.value.find { it.id == id }
 
     override suspend fun insertarProducto(producto: Producto) {
         check(buscarProducto(producto.codigo) == null) { "Código duplicado" }
+        // Igual que el índice único de Room: varios null sí, el mismo código de barras no.
+        check(producto.codigoBarras == null || buscarPorCodigoBarras(producto.codigoBarras) == null) {
+            "Código de barras duplicado"
+        }
         productos.value = (productos.value + producto).sortedBy { it.codigo }
     }
 
@@ -39,11 +45,12 @@ open class FakeInventarioDao(
 
     override suspend fun actualizarDatosProducto(
         codigo: String, nombre: String, descripcion: String, categoria: String,
-        tipo: String, precio: Int, stockMinimo: Int, detalle: String?
+        tipo: String, precio: Int, stockMinimo: Int, detalle: String?, codigoBarras: String?
     ): Int {
         val anterior = buscarProducto(codigo) ?: return 0
         reemplazarProducto(anterior.copy(nombre = nombre, descripcion = descripcion,
-            categoria = categoria, tipo = tipo, precio = precio, stockMinimo = stockMinimo, detalle = detalle))
+            categoria = categoria, tipo = tipo, precio = precio, stockMinimo = stockMinimo, detalle = detalle,
+            codigoBarras = codigoBarras))
         return 1
     }
 

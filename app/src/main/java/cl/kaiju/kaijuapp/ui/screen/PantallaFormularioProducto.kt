@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -30,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -62,6 +64,8 @@ fun PantallaFormularioProducto(
     onStockActualChange: (String) -> Unit,
     onStockMinimoChange: (String) -> Unit,
     onDetalleChange: (String) -> Unit,
+    onCodigoBarrasChange: (String) -> Unit,
+    onEscanearCodigoBarras: () -> Unit,
     onGuardar: () -> Unit,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier
@@ -165,6 +169,22 @@ fun PantallaFormularioProducto(
                 etiqueta = stringResource(R.string.campo_detalle),
                 icono = Icons.Filled.Edit
             )
+            CampoFormulario(
+                valor = estado.codigoBarras,
+                onValorChange = onCodigoBarrasChange,
+                etiqueta = stringResource(R.string.campo_codigo_barras),
+                icono = Icons.Filled.Search,
+                error = errores.codigoBarras,
+                tipoTeclado = KeyboardType.Number,
+                accion = {
+                    IconButton(onClick = onEscanearCodigoBarras) {
+                        Icon(
+                            painterResource(R.drawable.ic_codigo_barras),
+                            contentDescription = stringResource(R.string.escanear_codigo_barras)
+                        )
+                    }
+                }
+            )
             Button(
                 onClick = onGuardar,
                 // desactivado mientras se guarda asi un doble clic no intenta guardar dos veces
@@ -203,6 +223,8 @@ private fun FormularioProductoPreview(estado: FormularioProductoEstado, esEdicio
             onStockActualChange = {},
             onStockMinimoChange = {},
             onDetalleChange = {},
+            onCodigoBarrasChange = {},
+            onEscanearCodigoBarras = {},
             onGuardar = {},
             onVolver = {}
         )
@@ -243,7 +265,8 @@ private fun PantallaFormularioProductoEdicionPreview() {
             precio = "17990",
             stockActual = "2",
             stockMinimo = "5",
-            detalle = "Talla XL, negra"
+            detalle = "Talla XL, negra",
+            codigoBarras = "2000000000084"
         ),
         esEdicion = true
     )

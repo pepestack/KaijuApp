@@ -44,6 +44,7 @@ import androidx.navigation.navArgument
 import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Rol
+import cl.kaiju.kaijuapp.ui.components.rememberEscanerCodigoBarras
 import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
 import cl.kaiju.kaijuapp.ui.screen.PantallaCatalogo
 import cl.kaiju.kaijuapp.ui.screen.PantallaDetalleProducto
@@ -110,6 +111,16 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
             is EventoUi.EdicionLista -> navController.navigate(Rutas.Formulario.crearRuta(actual.codigo))
         }
     }
+
+    // abre el escaner de google y entrega el codigo leido a quien lo pidio si falla se muestra el error en el snackbar
+    // la primera vez play services descarga el escaner se avisa al empezar y al terminar para que se toque de nuevo
+    val mensajeInstalandoEscaner = stringResource(R.string.escaner_instalando)
+    val mensajeEscanerListo = stringResource(R.string.escaner_listo)
+    val escanear = rememberEscanerCodigoBarras(
+        onInstalando = { scope.launch { snackbarHostState.showSnackbar(mensajeInstalandoEscaner) } },
+        onListo = { scope.launch { snackbarHostState.showSnackbar(mensajeEscanerListo) } },
+        onError = inventarioViewModel::escaneoFallido
+    )
 
     // rol del usuario que inicio sesion se usa para mostrar u ocultar cosas
     val rol = sesion.rolActivo
@@ -283,6 +294,8 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                     onStockActualChange = inventarioViewModel::actualizarStockActual,
                     onStockMinimoChange = inventarioViewModel::actualizarStockMinimo,
                     onDetalleChange = inventarioViewModel::actualizarDetalle,
+                    onCodigoBarrasChange = inventarioViewModel::actualizarCodigoBarras,
+                    onEscanearCodigoBarras = { escanear(inventarioViewModel::actualizarCodigoBarras) },
                     // guardarProducto valida (rn-02 rn-03) y si sale bien el evento ProductoGuardado vuelve atras
                     onGuardar = { inventarioViewModel.guardarProducto(sesion.usuarioActivo) },
                     onVolver = { navController.popBackStack() }
@@ -297,6 +310,8 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                     tiposPermitidos = inventarioViewModel.tiposPermitidos(rol),
                     guardando = guardando,
                     onProductoChange = inventarioViewModel::actualizarProductoMovimiento,
+                    // el viewmodel busca el producto por su codigo de barras y lo deja elegido
+                    onEscanear = { escanear(inventarioViewModel::seleccionarProductoPorCodigoBarras) },
                     onTipoChange = inventarioViewModel::actualizarTipoMovimiento,
                     onCantidadChange = inventarioViewModel::actualizarCantidad,
                     onMotivoChange = inventarioViewModel::actualizarMotivo,

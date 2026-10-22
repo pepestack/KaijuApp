@@ -12,6 +12,7 @@ class InventarioRepository(private val dao: InventarioDao) {
     val usuarios = dao.observarUsuarios()
 
     suspend fun buscarProducto(codigo: String) = dao.buscarProducto(codigo)
+    suspend fun buscarPorCodigoBarras(codigoBarras: String) = dao.buscarPorCodigoBarras(codigoBarras)
     suspend fun obtenerCategorias() = dao.obtenerCategorias()
     suspend fun buscarUsuario(id: Int) = dao.buscarUsuario(id)
 
@@ -28,7 +29,7 @@ class InventarioRepository(private val dao: InventarioDao) {
 
     suspend fun actualizarProducto(producto: Producto): Boolean = dao.actualizarDatosProducto(
         producto.codigo, producto.nombre, producto.descripcion, producto.categoria,
-        producto.tipo, producto.precio, producto.stockMinimo, producto.detalle
+        producto.tipo, producto.precio, producto.stockMinimo, producto.detalle, producto.codigoBarras
     ) == 1
 
     // El ViewModel calcula el resultado. El DAO verifica que el stock leído siga vigente.

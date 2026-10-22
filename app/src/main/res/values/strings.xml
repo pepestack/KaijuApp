@@ -61,6 +61,11 @@
     <string name="campo_stock_actual">Stock actual</string>
     <string name="campo_stock_actual_bloqueado">Se modifica registrando movimientos</string>
     <string name="campo_stock_minimo">Stock mínimo</string>
+    <string name="campo_codigo_barras">Código de barras (opcional)</string>
+    <string name="escanear_codigo_barras">Escanear código de barras</string>
+    <string name="escaner_instalando">Descargando el escáner…</string>
+    <string name="escaner_listo">Escáner listo, toca de nuevo</string>
+    <string name="producto_codigo_barras">Código de barras: %1$s</string>
     <string name="campo_detalle">Detalle (talla, color, lote…)</string>
     <string name="formulario_producto_crear">Crear producto</string>
     <string name="formulario_producto_guardar">Guardar cambios</string>

@@ -15,6 +15,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KaijuApp"
         android:name=".KaijuApplication">
+        <!-- al instalar desde play store el escaner de codigos de barras se descarga junto con la app -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode_ui" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

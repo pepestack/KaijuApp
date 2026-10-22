@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import cl.kaiju.kaijuapp.model.CatalogoEstado
+import cl.kaiju.kaijuapp.model.CodigoBarras
 import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.FormularioProductoEstado
@@ -105,7 +106,7 @@ class InventarioViewModel(
             codigo = producto.codigo, nombre = producto.nombre, descripcion = producto.descripcion,
             categoria = producto.categoria, tipo = producto.tipo, precio = producto.precio.toString(),
             stockActual = producto.stockActual.toString(), stockMinimo = producto.stockMinimo.toString(),
-            detalle = producto.detalle.orEmpty()
+            detalle = producto.detalle.orEmpty(), codigoBarras = producto.codigoBarras.orEmpty()
         )
         _errorOperacion.value = null
         return true
@@ -125,6 +126,12 @@ class InventarioViewModel(
     }
     fun actualizarStockMinimo(valor: String) = _estadoFormularioProducto.update { it.copy(stockMinimo = valor) }
     fun actualizarDetalle(valor: String) = _estadoFormularioProducto.update { it.copy(detalle = valor) }
+    fun actualizarCodigoBarras(valor: String) = _estadoFormularioProducto.update { it.copy(codigoBarras = valor) }
+
+    // El escáner no siempre está disponible (sin Play services o sin internet la primera vez).
+    fun escaneoFallido() {
+        _errorOperacion.value = "No se pudo abrir el escáner"
+    }
 
     suspend fun validarFormularioProducto(
         estado: FormularioProductoEstado = _estadoFormularioProducto.value
@@ -140,10 +147,19 @@ class InventarioViewModel(
             categoria = if (estado.categoria.isBlank()) "La categoría es obligatoria" else null,
             precio = if ((estado.precio.trim().toIntOrNull() ?: 0) <= 0) "El precio debe ser un entero mayor que cero" else null,
             stockMinimo = validarStock(estado.stockMinimo),
-            stockActual = if (_esEdicion.value) null else validarStock(estado.stockActual)
+            stockActual = if (_esEdicion.value) null else validarStock(estado.stockActual),
+            codigoBarras = validarCodigoBarras(estado.codigoBarras)
         )
         _estadoFormularioProducto.update { it.copy(errores = errores) }
         return errores == FormularioProductoErrores()
+    }
+
+    // Es opcional; si se escribe debe ser válido y no pertenecer a otro producto.
+    private suspend fun validarCodigoBarras(valor: String): String? {
+        if (valor.isBlank()) return null
+        val normalizado = CodigoBarras.normalizar(valor) ?: return "Código de barras inválido (UPC-A o EAN-13)"
+        val dueno = repository.buscarPorCodigoBarras(normalizado)
+        return if (dueno != null && dueno.codigo != codigoEnEdicion) "Ese código de barras ya es del producto ${dueno.codigo}" else null
     }
 
     private fun validarStock(valor: String): String? {
@@ -180,7 +196,8 @@ class InventarioViewModel(
             tipo = estado.tipo.trim(), precio = estado.precio.trim().toInt(),
             // RN-05: editar datos no altera el stock, aunque haya cambiado durante la edición.
             stockActual = anterior?.stockActual ?: estado.stockActual.trim().toInt(),
-            stockMinimo = estado.stockMinimo.trim().toInt(), detalle = estado.detalle.trim().ifBlank { null }
+            stockMinimo = estado.stockMinimo.trim().toInt(), detalle = estado.detalle.trim().ifBlank { null },
+            codigoBarras = CodigoBarras.normalizar(estado.codigoBarras)
         )
         if (anterior != null) {
             if (!repository.actualizarProducto(producto)) {
@@ -202,6 +219,16 @@ class InventarioViewModel(
         _errorOperacion.value = null
     }
     fun actualizarProductoMovimiento(valor: String) = _estadoFormularioMovimiento.update { it.copy(codigoProducto = valor) }
+    // Escanear elige el producto igual que el desplegable; si no existe se avisa en ese campo.
+    fun seleccionarProductoPorCodigoBarras(valor: String) {
+        viewModelScope.launch {
+            val producto = CodigoBarras.normalizar(valor)?.let { repository.buscarPorCodigoBarras(it) }
+            _estadoFormularioMovimiento.update {
+                if (producto != null) it.copy(codigoProducto = producto.codigo, errores = it.errores.copy(producto = null))
+                else it.copy(errores = it.errores.copy(producto = "No hay un producto con el código de barras $valor"))
+            }
+        }
+    }
     fun actualizarTipoMovimiento(valor: TipoMovimiento) = _estadoFormularioMovimiento.update { it.copy(tipo = valor) }
     fun actualizarCantidad(valor: String) = _estadoFormularioMovimiento.update { it.copy(cantidad = valor) }
     fun actualizarMotivo(valor: String) = _estadoFormularioMovimiento.update { it.copy(motivo = valor) }

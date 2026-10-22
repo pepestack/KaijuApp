@@ -22,11 +22,13 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -54,6 +56,7 @@ fun PantallaMovimiento(
     tiposPermitidos: List<TipoMovimiento>,
     guardando: Boolean,
     onProductoChange: (String) -> Unit,
+    onEscanear: () -> Unit,
     onTipoChange: (TipoMovimiento) -> Unit,
     onCantidadChange: (String) -> Unit,
     onMotivoChange: (String) -> Unit,
@@ -87,6 +90,18 @@ fun PantallaMovimiento(
                 error = errores.producto,
                 ayuda = productoSeleccionado?.let { stringResource(R.string.producto_stock, it.stockActual) }
             )
+            // Alternativa al desplegable: el producto encontrado queda elegido en el selector
+            OutlinedButton(onClick = onEscanear, modifier = Modifier.fillMaxWidth()) {
+                Icon(
+                    painterResource(R.drawable.ic_codigo_barras),
+                    contentDescription = null,
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                )
+                Text(
+                    text = stringResource(R.string.escanear_codigo_barras),
+                    modifier = Modifier.padding(start = ButtonDefaults.IconSpacing)
+                )
+            }
 
             Text(
                 text = stringResource(R.string.campo_tipo_movimiento),
@@ -170,6 +185,7 @@ private fun MovimientoPreview(estado: FormularioMovimientoEstado, tiposPermitido
             tiposPermitidos = tiposPermitidos,
             guardando = false,
             onProductoChange = {},
+            onEscanear = {},
             onTipoChange = {},
             onCantidadChange = {},
             onMotivoChange = {},
