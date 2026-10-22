@@ -121,6 +121,15 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
     val rutaActual = backStackEntry?.destination?.route
     val mostrarBarra = itemsBarra.any { it.ruta.ruta == rutaActual }
 
+    // si android mato el proceso en segundo plano al volver restaura la pila (por ejemplo el catalogo)
+    // pero el sesionViewModel nace vacio, sin sesion no hay nada que mostrar asi que se vuelve al login
+    // rutaActual es null mientras el navhost aun no arma su grafo
+    LaunchedEffect(sesion.usuarioActivo, rutaActual) {
+        if (sesion.usuarioActivo == null && rutaActual != null && rutaActual != Rutas.Login.ruta) {
+            volverAlLogin(navController)
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
@@ -191,15 +200,7 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                         inventarioViewModel.limpiarFormularioMovimiento()
                         sesionViewModel.cerrarSesion()
                         snackbarHostState.currentSnackbarData?.dismiss()
-                        // Descarta también las pilas guardadas al cambiar de pestaña.
-                        // El siguiente perfil conserva el inventario, pero no la navegación anterior.
-                        listOf(Rutas.Catalogo, Rutas.Movimiento, Rutas.Alertas).forEach {
-                            navController.clearBackStack(it.ruta)
-                        }
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(navController.graph.id) { inclusive = false }
-                            launchSingleTop = true
-                        }
+                        volverAlLogin(navController)
                     }
                 )
             }
@@ -285,6 +286,19 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                 )
             }
         }
+    }
+}
+
+// lo usan el boton salir y la redireccion cuando no hay sesion
+private fun volverAlLogin(navController: NavHostController) {
+    // Descarta también las pilas guardadas al cambiar de pestaña.
+    // El siguiente perfil conserva el inventario, pero no la navegación anterior.
+    listOf(Rutas.Catalogo, Rutas.Movimiento, Rutas.Alertas).forEach {
+        navController.clearBackStack(it.ruta)
+    }
+    navController.navigate(Rutas.Login.ruta) {
+        popUpTo(navController.graph.id) { inclusive = false }
+        launchSingleTop = true
     }
 }
 
