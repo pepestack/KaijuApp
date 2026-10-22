@@ -127,7 +127,7 @@ class InventarioViewModelTest {
         val vm = InventarioViewModel(repo)
         completarProducto(vm, " P001 ")
         vm.actualizarNombre("a")
-        vm.actualizarCategoria("Inexistente")
+        vm.actualizarCategoria("   ")
         vm.actualizarPrecio("0")
         vm.actualizarStockMinimo("-1")
         vm.actualizarStockActual("1.5")

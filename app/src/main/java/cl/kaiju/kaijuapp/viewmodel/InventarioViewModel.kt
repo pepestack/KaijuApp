@@ -137,7 +137,7 @@ class InventarioViewModel(
                 else -> null
             },
             nombre = if (estado.nombre.trim().length < 3) "El nombre debe tener al menos 3 caracteres" else null,
-            categoria = if (estado.categoria !in repository.obtenerCategorias()) "Elige una categoría de la lista" else null,
+            categoria = if (estado.categoria.isBlank()) "La categoría es obligatoria" else null,
             precio = if ((estado.precio.trim().toIntOrNull() ?: 0) <= 0) "El precio debe ser un entero mayor que cero" else null,
             stockMinimo = validarStock(estado.stockMinimo),
             stockActual = if (_esEdicion.value) null else validarStock(estado.stockActual)
@@ -170,9 +170,13 @@ class InventarioViewModel(
             _errorOperacion.value = "El producto ya no existe"
             return@ejecutarGuardado false
         }
+        // Se pueden crear categorías nuevas, pero "poleras" se guarda como la "Poleras" que ya existe.
+        val categoriaEscrita = estado.categoria.trim()
+        val categoria = repository.obtenerCategorias()
+            .firstOrNull { it.equals(categoriaEscrita, ignoreCase = true) } ?: categoriaEscrita
         val producto = Producto(
             codigo = anterior?.codigo ?: estado.codigo.trim(), nombre = estado.nombre.trim(),
-            descripcion = estado.descripcion.trim(), categoria = estado.categoria,
+            descripcion = estado.descripcion.trim(), categoria = categoria,
             tipo = estado.tipo.trim(), precio = estado.precio.trim().toInt(),
             // RN-05: editar datos no altera el stock, aunque haya cambiado durante la edición.
             stockActual = anterior?.stockActual ?: estado.stockActual.trim().toInt(),

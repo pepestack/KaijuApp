@@ -38,7 +38,7 @@ import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.FormularioProductoErrores
 import cl.kaiju.kaijuapp.model.FormularioProductoEstado
 import cl.kaiju.kaijuapp.ui.components.CampoFormulario
-import cl.kaiju.kaijuapp.ui.components.SelectorDesplegable
+import cl.kaiju.kaijuapp.ui.components.CampoConSugerencias
 import cl.kaiju.kaijuapp.ui.theme.KaijuAppTheme
 
 /**
@@ -119,14 +119,12 @@ fun PantallaFormularioProducto(
                 icono = Icons.AutoMirrored.Filled.List,
                 lineasMaximas = 3
             )
-            SelectorDesplegable(
-                opciones = categorias,
-                seleccion = estado.categoria.ifBlank { null },
-                textoDe = { it },
-                onSeleccion = onCategoriaChange,
+            CampoConSugerencias(
+                valor = estado.categoria,
+                onValorChange = onCategoriaChange,
+                sugerencias = categorias,
                 etiqueta = stringResource(R.string.campo_categoria),
                 icono = Icons.Filled.Menu,
-                modifier = Modifier.fillMaxWidth(),
                 error = errores.categoria
             )
             CampoFormulario(
@@ -223,7 +221,7 @@ private fun PantallaFormularioProductoErroresPreview() {
             errores = FormularioProductoErrores(
                 codigo = "Ya existe un producto con ese código",
                 nombre = "El nombre debe tener al menos 3 caracteres",
-                categoria = "Elige una categoría",
+                categoria = "La categoría es obligatoria",
                 precio = "El precio debe ser mayor que cero",
                 stockMinimo = "El stock mínimo no puede ser negativo"
             )
