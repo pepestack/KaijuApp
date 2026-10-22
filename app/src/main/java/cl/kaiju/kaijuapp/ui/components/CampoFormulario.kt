@@ -27,7 +27,9 @@ fun CampoFormulario(
     ayuda: String? = null,
     tipoTeclado: KeyboardType = KeyboardType.Text,
     soloLectura: Boolean = false,
-    lineasMaximas: Int = 1
+    lineasMaximas: Int = 1,
+    // Botón opcional al final del campo (por ejemplo escanear); el ícono de error tiene prioridad.
+    accion: (@Composable () -> Unit)? = null
 ) {
     val textoApoyo = error ?: ayuda
     OutlinedTextField(
@@ -38,7 +40,7 @@ fun CampoFormulario(
         leadingIcon = { Icon(icono, contentDescription = null) },
         trailingIcon = if (error != null) {
             { Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.campo_con_error)) }
-        } else null,
+        } else accion,
         isError = error != null,
         supportingText = if (textoApoyo != null) {
             { Text(textoApoyo) }

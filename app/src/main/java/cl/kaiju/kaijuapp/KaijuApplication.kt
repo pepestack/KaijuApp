@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
 import cl.kaiju.kaijuapp.database.KaijuDatabase
+import cl.kaiju.kaijuapp.notificaciones.AvisoStock
+import cl.kaiju.kaijuapp.notificaciones.NotificadorStock
 import cl.kaiju.kaijuapp.repository.InventarioRepository
 
 // android crea esta clase una sola vez al abrir la app y vive mientras la app este abierta
@@ -18,6 +20,9 @@ class KaijuApplication : Application() {
     val repository by lazy {
         InventarioRepository(KaijuDatabase.obtenerInstancia(this).inventarioDao())
     }
+
+    // el aviso de stock bajo necesita context por eso se crea aqui y el viewmodel solo recibe la interfaz
+    val avisoStock: AvisoStock by lazy { NotificadorStock(this) }
 
     // se ejecuta una vez al iniciar la app
     override fun onCreate() {

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import cl.kaiju.kaijuapp.model.CatalogoEstado
+import cl.kaiju.kaijuapp.model.CodigoBarras
 import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.FormularioProductoEstado
@@ -15,6 +16,7 @@ import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.model.TipoMovimiento
 import cl.kaiju.kaijuapp.model.Usuario
+import cl.kaiju.kaijuapp.notificaciones.AvisoStock
 import cl.kaiju.kaijuapp.repository.InventarioRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +29,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class InventarioViewModel(private val repository: InventarioRepository) : ViewModel() {
+// avisoStock por defecto no hace nada asi las pruebas no necesitan notificaciones.
+class InventarioViewModel(
+    private val repository: InventarioRepository,
+    private val avisoStock: AvisoStock = AvisoStock {}
+) : ViewModel() {
     val productos = repository.productos.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val usuarios = repository.usuarios.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     // La vista lo usa para desactivar los botones mientras SQLite escribe.
@@ -100,7 +106,7 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
             codigo = producto.codigo, nombre = producto.nombre, descripcion = producto.descripcion,
             categoria = producto.categoria, tipo = producto.tipo, precio = producto.precio.toString(),
             stockActual = producto.stockActual.toString(), stockMinimo = producto.stockMinimo.toString(),
-            detalle = producto.detalle.orEmpty()
+            detalle = producto.detalle.orEmpty(), codigoBarras = producto.codigoBarras.orEmpty()
         )
         _errorOperacion.value = null
         return true
@@ -120,6 +126,12 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
     }
     fun actualizarStockMinimo(valor: String) = _estadoFormularioProducto.update { it.copy(stockMinimo = valor) }
     fun actualizarDetalle(valor: String) = _estadoFormularioProducto.update { it.copy(detalle = valor) }
+    fun actualizarCodigoBarras(valor: String) = _estadoFormularioProducto.update { it.copy(codigoBarras = valor) }
+
+    // El escáner no siempre está disponible (sin Play services o sin internet la primera vez).
+    fun escaneoFallido() {
+        _errorOperacion.value = "No se pudo abrir el escáner"
+    }
 
     suspend fun validarFormularioProducto(
         estado: FormularioProductoEstado = _estadoFormularioProducto.value
@@ -132,13 +144,22 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
                 else -> null
             },
             nombre = if (estado.nombre.trim().length < 3) "El nombre debe tener al menos 3 caracteres" else null,
-            categoria = if (estado.categoria !in repository.obtenerCategorias()) "Elige una categoría de la lista" else null,
+            categoria = if (estado.categoria.isBlank()) "La categoría es obligatoria" else null,
             precio = if ((estado.precio.trim().toIntOrNull() ?: 0) <= 0) "El precio debe ser un entero mayor que cero" else null,
             stockMinimo = validarStock(estado.stockMinimo),
-            stockActual = if (_esEdicion.value) null else validarStock(estado.stockActual)
+            stockActual = if (_esEdicion.value) null else validarStock(estado.stockActual),
+            codigoBarras = validarCodigoBarras(estado.codigoBarras)
         )
         _estadoFormularioProducto.update { it.copy(errores = errores) }
         return errores == FormularioProductoErrores()
+    }
+
+    // Es opcional; si se escribe debe ser válido y no pertenecer a otro producto.
+    private suspend fun validarCodigoBarras(valor: String): String? {
+        if (valor.isBlank()) return null
+        val normalizado = CodigoBarras.normalizar(valor) ?: return "Código de barras inválido (UPC-A o EAN-13)"
+        val dueno = repository.buscarPorCodigoBarras(normalizado)
+        return if (dueno != null && dueno.codigo != codigoEnEdicion) "Ese código de barras ya es del producto ${dueno.codigo}" else null
     }
 
     private fun validarStock(valor: String): String? {
@@ -165,13 +186,18 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
             _errorOperacion.value = "El producto ya no existe"
             return@ejecutarGuardado false
         }
+        // Se pueden crear categorías nuevas, pero "poleras" se guarda como la "Poleras" que ya existe.
+        val categoriaEscrita = estado.categoria.trim()
+        val categoria = repository.obtenerCategorias()
+            .firstOrNull { it.equals(categoriaEscrita, ignoreCase = true) } ?: categoriaEscrita
         val producto = Producto(
             codigo = anterior?.codigo ?: estado.codigo.trim(), nombre = estado.nombre.trim(),
-            descripcion = estado.descripcion.trim(), categoria = estado.categoria,
+            descripcion = estado.descripcion.trim(), categoria = categoria,
             tipo = estado.tipo.trim(), precio = estado.precio.trim().toInt(),
             // RN-05: editar datos no altera el stock, aunque haya cambiado durante la edición.
             stockActual = anterior?.stockActual ?: estado.stockActual.trim().toInt(),
-            stockMinimo = estado.stockMinimo.trim().toInt(), detalle = estado.detalle.trim().ifBlank { null }
+            stockMinimo = estado.stockMinimo.trim().toInt(), detalle = estado.detalle.trim().ifBlank { null },
+            codigoBarras = CodigoBarras.normalizar(estado.codigoBarras)
         )
         if (anterior != null) {
             if (!repository.actualizarProducto(producto)) {
@@ -193,6 +219,16 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         _errorOperacion.value = null
     }
     fun actualizarProductoMovimiento(valor: String) = _estadoFormularioMovimiento.update { it.copy(codigoProducto = valor) }
+    // Escanear elige el producto igual que el desplegable; si no existe se avisa en ese campo.
+    fun seleccionarProductoPorCodigoBarras(valor: String) {
+        viewModelScope.launch {
+            val producto = CodigoBarras.normalizar(valor)?.let { repository.buscarPorCodigoBarras(it) }
+            _estadoFormularioMovimiento.update {
+                if (producto != null) it.copy(codigoProducto = producto.codigo, errores = it.errores.copy(producto = null))
+                else it.copy(errores = it.errores.copy(producto = "No hay un producto con el código de barras $valor"))
+            }
+        }
+    }
     fun actualizarTipoMovimiento(valor: TipoMovimiento) = _estadoFormularioMovimiento.update { it.copy(tipo = valor) }
     fun actualizarCantidad(valor: String) = _estadoFormularioMovimiento.update { it.copy(cantidad = valor) }
     fun actualizarMotivo(valor: String) = _estadoFormularioMovimiento.update { it.copy(motivo = valor) }
@@ -265,6 +301,9 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
             _errorOperacion.value = "El stock cambió. Revisa la cantidad e intenta nuevamente."
             return@ejecutarGuardado false
         }
+        // Solo se avisa al entrar en alerta; si ya estaba bajo el mínimo no se repite la notificación.
+        val actualizado = producto.copy(stockActual = nuevoStock)
+        if (!producto.enAlerta && actualizado.enAlerta) avisoStock.stockBajo(actualizado)
         limpiarFormularioMovimiento()
         true
     }
@@ -313,8 +352,8 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
     }
 
     companion object {
-        fun factory(repository: InventarioRepository) = viewModelFactory {
-            initializer { InventarioViewModel(repository) }
+        fun factory(repository: InventarioRepository, avisoStock: AvisoStock) = viewModelFactory {
+            initializer { InventarioViewModel(repository, avisoStock) }
         }
     }
 }

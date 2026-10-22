@@ -1,5 +1,10 @@
 package cl.kaiju.kaijuapp.navigation
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -17,11 +22,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -34,6 +44,7 @@ import androidx.navigation.navArgument
 import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Rol
+import cl.kaiju.kaijuapp.ui.components.rememberEscanerCodigoBarras
 import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
 import cl.kaiju.kaijuapp.ui.screen.PantallaCatalogo
 import cl.kaiju.kaijuapp.ui.screen.PantallaDetalleProducto
@@ -101,9 +112,36 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
         }
     }
 
+    // abre el escaner de google y entrega el codigo leido a quien lo pidio si falla se muestra el error en el snackbar
+    // la primera vez play services descarga el escaner se avisa al empezar y al terminar para que se toque de nuevo
+    val mensajeInstalandoEscaner = stringResource(R.string.escaner_instalando)
+    val mensajeEscanerListo = stringResource(R.string.escaner_listo)
+    val escanear = rememberEscanerCodigoBarras(
+        onInstalando = { scope.launch { snackbarHostState.showSnackbar(mensajeInstalandoEscaner) } },
+        onListo = { scope.launch { snackbarHostState.showSnackbar(mensajeEscanerListo) } },
+        onError = inventarioViewModel::escaneoFallido
+    )
+
     // rol del usuario que inicio sesion se usa para mostrar u ocultar cosas
     val rol = sesion.rolActivo
     val esAdmin = rol == Rol.ADMINISTRADOR
+
+    // desde android 13 las notificaciones de stock bajo necesitan permiso y pedirlo requiere la activity por eso va en la vista
+    // el permiso es del celular no del usuario se pide solo a quien ve las alertas para que un vendedor no lo rechace por todos
+    // rememberSaveable evita volver a preguntar en la misma sesion de la app aunque se gire o cambie de usuario
+    val context = LocalContext.current
+    val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    var permisoPedido by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(rol) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !permisoPedido &&
+            (rol == Rol.ADMINISTRADOR || rol == Rol.ENCARGADO_INVENTARIO) &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            permisoPedido = true
+            pedirPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     // las alertas son solo para el encargado y el administrador (rf-09)
     // si no corresponde el item queda null y listOfNotNull lo descarta
@@ -256,6 +294,8 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                     onStockActualChange = inventarioViewModel::actualizarStockActual,
                     onStockMinimoChange = inventarioViewModel::actualizarStockMinimo,
                     onDetalleChange = inventarioViewModel::actualizarDetalle,
+                    onCodigoBarrasChange = inventarioViewModel::actualizarCodigoBarras,
+                    onEscanearCodigoBarras = { escanear(inventarioViewModel::actualizarCodigoBarras) },
                     // guardarProducto valida (rn-02 rn-03) y si sale bien el evento ProductoGuardado vuelve atras
                     onGuardar = { inventarioViewModel.guardarProducto(sesion.usuarioActivo) },
                     onVolver = { navController.popBackStack() }
@@ -270,6 +310,8 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                     tiposPermitidos = inventarioViewModel.tiposPermitidos(rol),
                     guardando = guardando,
                     onProductoChange = inventarioViewModel::actualizarProductoMovimiento,
+                    // el viewmodel busca el producto por su codigo de barras y lo deja elegido
+                    onEscanear = { escanear(inventarioViewModel::seleccionarProductoPorCodigoBarras) },
                     onTipoChange = inventarioViewModel::actualizarTipoMovimiento,
                     onCantidadChange = inventarioViewModel::actualizarCantidad,
                     onMotivoChange = inventarioViewModel::actualizarMotivo,

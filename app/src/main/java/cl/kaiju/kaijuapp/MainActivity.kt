@@ -25,8 +25,9 @@ class MainActivity : ComponentActivity() {
                 // la activity solo carga el navhost toda la navegacion vive ahi
                 // application es la KaijuApplication que creo android y el as le dice a kotlin de que tipo es
                 // asi se le puede pedir el repository unico, que solo se usa para armar la factory del viewmodel
+                val app = application as KaijuApplication
                 AppNavHost(
-                    inventarioFactory = InventarioViewModel.factory((application as KaijuApplication).repository)
+                    inventarioFactory = InventarioViewModel.factory(app.repository, app.avisoStock)
                 )
             }
         }

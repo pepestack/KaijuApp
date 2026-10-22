@@ -22,7 +22,8 @@ object DatosDePrueba {
             precio = 12990,
             stockActual = 15,
             stockMinimo = 5,
-            detalle = "Talla M, negra"
+            detalle = "Talla M, negra",
+            codigoBarras = "2000000000015"
         ),
         Producto(
             codigo = "P002",
@@ -33,7 +34,8 @@ object DatosDePrueba {
             precio = 12990,
             stockActual = 15,
             stockMinimo = 5,
-            detalle = "Talla L, negra"
+            detalle = "Talla L, negra",
+            codigoBarras = "2000000000022"
         ),
         Producto(
             codigo = "P003",
@@ -44,7 +46,8 @@ object DatosDePrueba {
             precio = 12990,
             stockActual = 15,
             stockMinimo = 5,
-            detalle = "Talla XL, negra"
+            detalle = "Talla XL, negra",
+            codigoBarras = "2000000000039"
         ),
         Producto(
             codigo = "P004",
@@ -55,7 +58,8 @@ object DatosDePrueba {
             precio = 12990,
             stockActual = 15,
             stockMinimo = 5,
-            detalle = "Talla S, negra"
+            detalle = "Talla S, negra",
+            codigoBarras = "2000000000046"
         ),
         Producto(
             codigo = "P005",
@@ -66,7 +70,8 @@ object DatosDePrueba {
             precio = 15990,
             stockActual = 15,
             stockMinimo = 5,
-            detalle = "Talla S, negra"
+            detalle = "Talla S, negra",
+            codigoBarras = "2000000000053"
         ),
         Producto(
             codigo = "P006",
@@ -77,7 +82,8 @@ object DatosDePrueba {
             precio = 15990,
             stockActual = 15,
             stockMinimo = 5,
-            detalle = "Talla M, negra"
+            detalle = "Talla M, negra",
+            codigoBarras = "2000000000060"
         ),
         Producto(
             codigo = "P007",
@@ -88,7 +94,8 @@ object DatosDePrueba {
             precio = 15990,
             stockActual = 15,
             stockMinimo = 5,
-            detalle = "Talla L, negra"
+            detalle = "Talla L, negra",
+            codigoBarras = "2000000000077"
         ),
         Producto(
             codigo = "P008",
@@ -99,7 +106,8 @@ object DatosDePrueba {
             precio = 17990,
             stockActual = 2,
             stockMinimo = 5,
-            detalle = "Talla XL, negra"
+            detalle = "Talla XL, negra",
+            codigoBarras = "2000000000084"
         ),
         Producto(
             codigo = "P009",
@@ -110,7 +118,8 @@ object DatosDePrueba {
             precio = 13990,
             stockActual = 0,
             stockMinimo = 5,
-            detalle = "Talla L oversize, negra"
+            detalle = "Talla L oversize, negra",
+            codigoBarras = "2000000000091"
         ),
         Producto(
             codigo = "P010",
@@ -121,7 +130,8 @@ object DatosDePrueba {
             precio = 13990,
             stockActual = 3,
             stockMinimo = 5,
-            detalle = "Talla XL oversize, negra"
+            detalle = "Talla XL oversize, negra",
+            codigoBarras = "2000000000107"
         ),
 
     )

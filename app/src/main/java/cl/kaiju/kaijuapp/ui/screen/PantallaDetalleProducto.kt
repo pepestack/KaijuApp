@@ -129,6 +129,13 @@ private fun DatosProducto(producto: Producto) {
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            producto.codigoBarras?.let {
+                Text(
+                    text = stringResource(R.string.producto_codigo_barras, it),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Text(
                 text = stringResource(R.string.producto_categoria, producto.categoria),
                 style = MaterialTheme.typography.bodyMedium
