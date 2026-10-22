@@ -10,11 +10,13 @@ import cl.kaiju.kaijuapp.model.FormularioProductoEstado
 import cl.kaiju.kaijuapp.model.FormularioProductoErrores
 import cl.kaiju.kaijuapp.model.FormularioMovimientoEstado
 import cl.kaiju.kaijuapp.model.FormularioMovimientoErrores
+import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.model.TipoMovimiento
 import cl.kaiju.kaijuapp.model.Usuario
 import cl.kaiju.kaijuapp.repository.InventarioRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -107,7 +109,7 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
                 else -> null
             },
             nombre = if (estado.nombre.trim().length < 3) "El nombre debe tener al menos 3 caracteres" else null,
-            categoria = if (estado.categoria !in repository.obtenerProductos().map { it.categoria }) "Elige una categoría de la lista" else null,
+            categoria = if (estado.categoria !in repository.obtenerCategorias()) "Elige una categoría de la lista" else null,
             precio = if ((estado.precio.trim().toIntOrNull() ?: 0) <= 0) "El precio debe ser un entero mayor que cero" else null,
             stockMinimo = validarStock(estado.stockMinimo),
             stockActual = if (_esEdicion.value) null else validarStock(estado.stockActual)
@@ -153,6 +155,9 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         prepararNuevoProducto()
         true
     }
+
+    // La pantalla de detalle pide el historial al ViewModel, nunca al repository.
+    fun historialDe(codigo: String): Flow<List<Movimiento>> = repository.historialDe(codigo)
 
     fun limpiarFormularioMovimiento() {
         _estadoFormularioMovimiento.value = FormularioMovimientoEstado()

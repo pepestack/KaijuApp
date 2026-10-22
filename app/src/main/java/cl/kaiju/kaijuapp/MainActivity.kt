@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import cl.kaiju.kaijuapp.navigation.AppNavHost
 import cl.kaiju.kaijuapp.ui.theme.KaijuAppTheme
+import cl.kaiju.kaijuapp.viewmodel.InventarioViewModel
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 class MainActivity : ComponentActivity() {
@@ -23,8 +24,10 @@ class MainActivity : ComponentActivity() {
             KaijuAppTheme {
                 // la activity solo carga el navhost toda la navegacion vive ahi
                 // application es la KaijuApplication que creo android y el as le dice a kotlin de que tipo es
-                // asi se le puede pedir el repository unico
-                AppNavHost(repository = (application as KaijuApplication).repository)
+                // asi se le puede pedir el repository unico, que solo se usa para armar la factory del viewmodel
+                AppNavHost(
+                    inventarioFactory = InventarioViewModel.factory((application as KaijuApplication).repository)
+                )
             }
         }
     }

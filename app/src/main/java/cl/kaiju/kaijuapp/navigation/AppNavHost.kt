@@ -22,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -32,7 +33,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.Rol
-import cl.kaiju.kaijuapp.repository.InventarioRepository
 import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
 import cl.kaiju.kaijuapp.ui.screen.PantallaCatalogo
 import cl.kaiju.kaijuapp.ui.screen.PantallaDetalleProducto
@@ -48,7 +48,7 @@ private data class ItemBarra(val ruta: Rutas, val etiqueta: Int, val icono: Imag
 
 // las pantallas no saben nada de viewmodels reciben datos por parametro y avisan eventos con lambdas
 @Composable
-fun AppNavHost(repository: InventarioRepository) {
+fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
     // control remoto de la navegacion sabe en que pantalla estas y te mueve entre ellas
     val navController = rememberNavController()
 
@@ -56,9 +56,10 @@ fun AppNavHost(repository: InventarioRepository) {
     // si cada pantalla creara el suyo no verian los mismos datos
     // viewModel() busca uno que ya exista (sobrevive al girar) y solo lo crea si no hay
     // inventarioViewModel necesita la factory porque recibe el repository en su constructor
+    // la factory llega desde MainActivity asi el navhost (la vista) nunca toca el repository
     val sesionViewModel: SesionViewModel = viewModel()
     val inventarioViewModel: InventarioViewModel =
-        viewModel(factory = InventarioViewModel.factory(repository))
+        viewModel(factory = inventarioFactory)
 
     // collectAsState convierte el stateflow en estado que compose observa cuando cambia la pantalla se redibuja
     // by permite usar sesion.algo directo sin escribir .value
@@ -194,7 +195,7 @@ fun AppNavHost(repository: InventarioRepository) {
                 val codigo = entry.arguments?.getString("codigo") ?: return@composable
                 val producto = productos.find { it.codigo == codigo } ?: return@composable
                 // remember(codigo) crea el flujo del historial una vez por producto y no en cada redibujo
-                val historial by remember(codigo) { repository.historialDe(codigo) }
+                val historial by remember(codigo) { inventarioViewModel.historialDe(codigo) }
                     .collectAsState(initial = emptyList())
 
                 PantallaDetalleProducto(

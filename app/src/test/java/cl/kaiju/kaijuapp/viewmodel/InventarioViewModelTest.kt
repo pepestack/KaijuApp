@@ -272,4 +272,16 @@ class InventarioViewModelTest {
         assertEquals(1, repo.productos.first().size)
         assertTrue(repo.movimientos.first().isEmpty())
     }
+
+    @Test fun historialSoloIncluyeMovimientosDelProductoPedido() = runTest(dispatcher) {
+        val repo = repositorio()
+        val vm = InventarioViewModel(repo)
+        repo.registrarMovimiento("P001", TipoMovimiento.ENTRADA, 1, null, administrador.id, 5, 6)
+        repo.registrarMovimiento("P002", TipoMovimiento.ENTRADA, 2, null, administrador.id, 10, 12)
+        repo.registrarMovimiento("P001", TipoMovimiento.SALIDA_VENTA, 3, null, vendedor.id, 6, 3)
+        val historial = vm.historialDe("P001").first()
+        assertEquals(2, historial.size)
+        assertTrue(historial.all { it.codigoProducto == "P001" })
+        assertTrue(vm.historialDe("P999").first().isEmpty())
+    }
 }

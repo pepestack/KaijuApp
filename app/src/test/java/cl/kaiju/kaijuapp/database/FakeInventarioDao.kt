@@ -4,6 +4,7 @@ import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 /** DAO de prueba según la guía: no necesita Context ni un dispositivo Android. */
 open class FakeInventarioDao(
@@ -17,8 +18,11 @@ open class FakeInventarioDao(
     override fun observarProductos() = productos
     override fun observarMovimientos() = movimientos
     override fun observarUsuarios() = usuarios
+    override fun observarHistorial(codigo: String) =
+        movimientos.map { lista -> lista.filter { it.codigoProducto == codigo } }
     override suspend fun buscarProducto(codigo: String) = productos.value.find { it.codigo == codigo }
     override suspend fun obtenerProductos() = productos.value
+    override suspend fun obtenerCategorias() = productos.value.map { it.categoria }.distinct()
     override suspend fun buscarUsuario(id: Int) = usuarios.value.find { it.id == id }
 
     override suspend fun insertarProducto(producto: Producto) {
