@@ -21,8 +21,8 @@
     <string name="tipo_ajuste">Ajuste</string>
 
     <!-- Login -->
-    <string name="login_titulo">KAIJU</string>
-    <string name="login_subtitulo">Inventario de serigrafía. Elige un usuario de prueba para ingresar.</string>
+    <string name="login_titulo">KaijuApp</string>
+    <string name="login_subtitulo">Inventario de productos. Elige un usuario de prueba para ingresar.</string>
     <string name="login_ingresar">Ingresar</string>
 
     <!-- Catálogo -->
