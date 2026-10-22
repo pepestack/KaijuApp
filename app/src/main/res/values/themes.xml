@@ -12,7 +12,7 @@
         <!-- Fondo negro -->
         <item name="windowSplashScreenBackground">@color/kaiju_black</item>
 
-        <!-- Icono provisional de Necoarc -->
+        <!-- Icono -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/necoarc_splash</item>
 
         <!-- Tema que se aplica después -->
