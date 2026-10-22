@@ -90,4 +90,9 @@
 
     <!-- Notificaciones -->
     <string name="canal_alertas_nombre">Alertas de stock</string>
+    <string name="notificacion_stock_titulo">Stock bajo: %1$s</string>
+    <plurals name="notificacion_stock_texto">
+        <item quantity="one">Queda %1$d unidad (mínimo %2$d)</item>
+        <item quantity="other">Quedan %1$d unidades (mínimo %2$d)</item>
+    </plurals>
 </resources>

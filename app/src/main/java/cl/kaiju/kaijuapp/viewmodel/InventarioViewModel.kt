@@ -15,6 +15,7 @@ import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.model.TipoMovimiento
 import cl.kaiju.kaijuapp.model.Usuario
+import cl.kaiju.kaijuapp.notificaciones.AvisoStock
 import cl.kaiju.kaijuapp.repository.InventarioRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +28,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class InventarioViewModel(private val repository: InventarioRepository) : ViewModel() {
+// avisoStock por defecto no hace nada asi las pruebas no necesitan notificaciones.
+class InventarioViewModel(
+    private val repository: InventarioRepository,
+    private val avisoStock: AvisoStock = AvisoStock {}
+) : ViewModel() {
     val productos = repository.productos.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val usuarios = repository.usuarios.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     // La vista lo usa para desactivar los botones mientras SQLite escribe.
@@ -265,6 +270,9 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
             _errorOperacion.value = "El stock cambió. Revisa la cantidad e intenta nuevamente."
             return@ejecutarGuardado false
         }
+        // Solo se avisa al entrar en alerta; si ya estaba bajo el mínimo no se repite la notificación.
+        val actualizado = producto.copy(stockActual = nuevoStock)
+        if (!producto.enAlerta && actualizado.enAlerta) avisoStock.stockBajo(actualizado)
         limpiarFormularioMovimiento()
         true
     }
@@ -313,8 +321,8 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
     }
 
     companion object {
-        fun factory(repository: InventarioRepository) = viewModelFactory {
-            initializer { InventarioViewModel(repository) }
+        fun factory(repository: InventarioRepository, avisoStock: AvisoStock) = viewModelFactory {
+            initializer { InventarioViewModel(repository, avisoStock) }
         }
     }
 }
