@@ -1,8 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- Tema principal de Kaiju -->
     <style name="Theme.KaijuApp" parent="android:Theme.Material.NoActionBar">
-        <!-- Matches KaijuBlack so there is no white flash before Compose draws -->
         <item name="android:windowBackground">@color/kaiju_black</item>
     </style>
+
+    <!-- inicio -->
+    <style name="Theme.KaijuApp.Starting" parent="Theme.SplashScreen">
+
+        <!-- Fondo negro -->
+        <item name="windowSplashScreenBackground">@color/kaiju_black</item>
+
+        <!-- Icono provisional de Necoarc -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/necoarc_splash</item>
+
+        <!-- Tema que se aplica después -->
+        <item name="postSplashScreenTheme">@style/Theme.KaijuApp</item>
+
+    </style>
+
 </resources>

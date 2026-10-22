@@ -8,9 +8,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import cl.kaiju.kaijuapp.navigation.AppNavHost
 import cl.kaiju.kaijuapp.ui.theme.KaijuAppTheme
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         // Light system bar icons over the dark Kaiju background
         enableEdgeToEdge(
