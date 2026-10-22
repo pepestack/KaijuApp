@@ -34,7 +34,7 @@ class InventarioRepository(private val dao: InventarioDao) {
         producto.tipo, producto.precio, producto.stockMinimo, producto.detalle
     ) == 1
 
-    // El ViewModel calcula el resultado. El DAO verifica que el stock le?do siga vigente.
+    // El ViewModel calcula el resultado. El DAO verifica que el stock leído siga vigente.
     suspend fun registrarMovimiento(
         codigoProducto: String, tipo: TipoMovimiento, cantidad: Int, motivo: String?,
         usuarioId: Int, stockEsperado: Int, nuevoStock: Int

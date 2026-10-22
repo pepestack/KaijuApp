@@ -35,7 +35,7 @@ import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.TipoMovimiento
-import cl.kaiju.kaijuapp.repository.DatosDePrueba
+import cl.kaiju.kaijuapp.database.DatosDePrueba
 import cl.kaiju.kaijuapp.ui.components.EstadoVacio
 import cl.kaiju.kaijuapp.ui.components.IndicadorStock
 import cl.kaiju.kaijuapp.ui.components.etiqueta

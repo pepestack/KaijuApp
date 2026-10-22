@@ -36,7 +36,7 @@ import cl.kaiju.kaijuapp.model.FormularioMovimientoErrores
 import cl.kaiju.kaijuapp.model.FormularioMovimientoEstado
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.TipoMovimiento
-import cl.kaiju.kaijuapp.repository.DatosDePrueba
+import cl.kaiju.kaijuapp.database.DatosDePrueba
 import cl.kaiju.kaijuapp.ui.components.CampoFormulario
 import cl.kaiju.kaijuapp.ui.components.SelectorDesplegable
 import cl.kaiju.kaijuapp.ui.components.etiqueta

@@ -166,7 +166,7 @@ class InventarioViewModelTest {
         assertEquals("", vm.estadoFormularioMovimiento.value.codigoProducto)
     }
 
-    @Test fun ajusteRequiereMotivoYEstableceStockContadoPositivo() = runTest(dispatcher) {
+    @Test fun ajusteRequiereMotivoYEstableceStockContado() = runTest(dispatcher) {
         val repo = repositorio()
         val vm = InventarioViewModel(repo)
         vm.actualizarProductoMovimiento("P001")
@@ -176,13 +176,30 @@ class InventarioViewModelTest {
         assertNotNull(vm.estadoFormularioMovimiento.value.errores.motivo)
         assertTrue(repo.movimientos.first().isEmpty())
         vm.actualizarMotivo("  Conteo físico  ")
-        vm.actualizarCantidad("0")
+        vm.actualizarCantidad("-1")
         assertFalse(vm.registrarMovimiento(administrador))
         vm.actualizarCantidad("2")
         assertFalse(vm.registrarMovimiento(vendedor))
         assertTrue(vm.registrarMovimiento(administrador))
         assertEquals(2, repo.buscarProducto("P001")!!.stockActual)
         assertEquals("Conteo físico", repo.movimientos.first().single().motivo)
+    }
+
+    @Test fun ajustePuedeDejarStockEnCeroPeroOtrosTiposNo() = runTest(dispatcher) {
+        val repo = repositorio()
+        val vm = InventarioViewModel(repo)
+        vm.actualizarProductoMovimiento("P001")
+        vm.actualizarTipoMovimiento(TipoMovimiento.ENTRADA)
+        vm.actualizarCantidad("0")
+        assertFalse(vm.registrarMovimiento(administrador))
+        assertNotNull(vm.estadoFormularioMovimiento.value.errores.cantidad)
+        vm.actualizarProductoMovimiento("P001")
+        vm.actualizarTipoMovimiento(TipoMovimiento.AJUSTE)
+        vm.actualizarCantidad("0")
+        vm.actualizarMotivo("Productos dañados")
+        assertTrue(vm.registrarMovimiento(administrador))
+        assertEquals(0, repo.buscarProducto("P001")!!.stockActual)
+        assertEquals(TipoMovimiento.AJUSTE, repo.movimientos.first().single().tipo)
     }
 
     @Test fun entradaValidaSumaStockYRechazaDesbordamiento() = runTest(dispatcher) {

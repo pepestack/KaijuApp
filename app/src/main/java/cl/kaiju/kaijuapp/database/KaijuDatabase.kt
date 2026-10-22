@@ -8,7 +8,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.Usuario
-import cl.kaiju.kaijuapp.repository.DatosDePrueba
 
 @Database(entities = [Producto::class, Movimiento::class, Usuario::class], version = 1, exportSchema = false)
 abstract class KaijuDatabase : RoomDatabase() {

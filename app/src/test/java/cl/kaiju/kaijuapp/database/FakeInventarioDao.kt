@@ -3,7 +3,6 @@ package cl.kaiju.kaijuapp.database
 import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.Usuario
-import cl.kaiju.kaijuapp.repository.DatosDePrueba
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** DAO de prueba según la guía: no necesita Context ni un dispositivo Android. */

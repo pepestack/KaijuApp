@@ -7,7 +7,6 @@ import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.model.TipoMovimiento
-import cl.kaiju.kaijuapp.repository.DatosDePrueba
 import cl.kaiju.kaijuapp.repository.InventarioRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking

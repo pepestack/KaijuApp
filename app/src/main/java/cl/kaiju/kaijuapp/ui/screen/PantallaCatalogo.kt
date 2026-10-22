@@ -35,7 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.Producto
-import cl.kaiju.kaijuapp.repository.DatosDePrueba
+import cl.kaiju.kaijuapp.database.DatosDePrueba
 import cl.kaiju.kaijuapp.ui.components.EstadoVacio
 import cl.kaiju.kaijuapp.ui.components.TarjetaProducto
 import cl.kaiju.kaijuapp.ui.theme.KaijuAppTheme

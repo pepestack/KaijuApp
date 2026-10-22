@@ -191,7 +191,8 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
             },
             cantidad = when {
                 cantidad == null -> "La cantidad debe ser un número entero"
-                cantidad <= 0 -> "La cantidad debe ser mayor que cero"
+                // El ajuste fija el stock contado, así que 0 es válido (todo perdido o dañado).
+                cantidad < 0 || (cantidad == 0 && estado.tipo != TipoMovimiento.AJUSTE) -> "La cantidad debe ser mayor que cero"
                 salida && producto != null && cantidad > producto.stockActual -> "La salida supera el stock disponible"
                 estado.tipo == TipoMovimiento.ENTRADA && producto != null && cantidad.toLong() + producto.stockActual > Int.MAX_VALUE -> "La entrada supera el stock máximo admitido"
                 else -> null
