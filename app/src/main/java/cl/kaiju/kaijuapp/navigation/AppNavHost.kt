@@ -32,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.kaiju.kaijuapp.R
+import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
 import cl.kaiju.kaijuapp.ui.screen.PantallaCatalogo
@@ -71,15 +72,33 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
     val esEdicion by inventarioViewModel.esEdicion.collectAsState()
     val formularioMovimiento by inventarioViewModel.estadoFormularioMovimiento.collectAsState()
     val errorOperacion by inventarioViewModel.errorOperacion.collectAsState()
+    val guardando by inventarioViewModel.guardando.collectAsState()
+    val evento by inventarioViewModel.evento.collectAsState()
 
     // snackbar mensajes cortos abajo de la pantalla para errores del viewmodel y confirmaciones
-    // scope sirve para lanzar el snackbar desde un clic porque showSnackbar es suspend
+    // scope lanza el snackbar de confirmacion aparte asi no se corta cuando el evento se consume
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val mensajeRegistrado = stringResource(R.string.movimiento_registrado)
     // LaunchedEffect ejecuta el bloque cada vez que errorOperacion cambia si no es null lo muestra
+    // al terminar avisa al viewmodel que ya se vio asi no reaparece al girar y el mismo error puede volver a mostrarse
     LaunchedEffect(errorOperacion) {
-        errorOperacion?.let { snackbarHostState.showSnackbar(it) }
+        errorOperacion?.let {
+            snackbarHostState.showSnackbar(it)
+            inventarioViewModel.errorMostrado()
+        }
+    }
+
+    // el viewmodel termina la operacion y deja un evento la vista navega o avisa y lo consume una sola vez
+    // se consume antes de actuar asi girar el celular no repite la navegacion
+    LaunchedEffect(evento) {
+        val actual = evento ?: return@LaunchedEffect
+        inventarioViewModel.consumirEvento()
+        when (actual) {
+            EventoUi.ProductoGuardado -> navController.popBackStack()
+            EventoUi.MovimientoRegistrado -> scope.launch { snackbarHostState.showSnackbar(mensajeRegistrado) }
+            is EventoUi.EdicionLista -> navController.navigate(Rutas.Formulario.crearRuta(actual.codigo))
+        }
     }
 
     // rol del usuario que inicio sesion se usa para mostrar u ocultar cosas
@@ -203,14 +222,8 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                     movimientos = historial,
                     nombresUsuarios = usuarios.associate { it.id to it.nombre },
                     puedeEditar = esAdmin, // rf-05
-                    // carga los datos del producto en el formulario y recien ahi navega
-                    onEditar = {
-                        scope.launch {
-                            if (inventarioViewModel.prepararEdicionProducto(codigo)) {
-                                navController.navigate(Rutas.Formulario.crearRuta(codigo))
-                            }
-                        }
-                    },
+                    // carga los datos del producto en el formulario y el evento EdicionLista hace la navegacion
+                    onEditar = { inventarioViewModel.prepararEdicionProducto(codigo) },
                     // popBackStack vuelve a la pantalla anterior
                     onVolver = { navController.popBackStack() }
                 )
@@ -231,6 +244,7 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                 PantallaFormularioProducto(
                     estado = formularioProducto,
                     esEdicion = esEdicion,
+                    guardando = guardando,
                     categorias = catalogo.categorias,
                     onCodigoChange = inventarioViewModel::actualizarCodigo,
                     onNombreChange = inventarioViewModel::actualizarNombre,
@@ -241,14 +255,8 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                     onStockActualChange = inventarioViewModel::actualizarStockActual,
                     onStockMinimoChange = inventarioViewModel::actualizarStockMinimo,
                     onDetalleChange = inventarioViewModel::actualizarDetalle,
-                    // guardarProducto valida (rn-02 rn-03) y si sale bien vuelve atras
-                    onGuardar = {
-                        scope.launch {
-                            if (inventarioViewModel.guardarProducto(sesion.usuarioActivo)) {
-                                navController.popBackStack()
-                            }
-                        }
-                    },
+                    // guardarProducto valida (rn-02 rn-03) y si sale bien el evento ProductoGuardado vuelve atras
+                    onGuardar = { inventarioViewModel.guardarProducto(sesion.usuarioActivo) },
                     onVolver = { navController.popBackStack() }
                 )
             }
@@ -259,18 +267,13 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                     productos = productos,
                     // que tipos de movimiento puede usar cada rol lo decide el viewmodel
                     tiposPermitidos = inventarioViewModel.tiposPermitidos(rol),
+                    guardando = guardando,
                     onProductoChange = inventarioViewModel::actualizarProductoMovimiento,
                     onTipoChange = inventarioViewModel::actualizarTipoMovimiento,
                     onCantidadChange = inventarioViewModel::actualizarCantidad,
                     onMotivoChange = inventarioViewModel::actualizarMotivo,
-                    // registrarMovimiento valida (rn-01 rn-04) y si sale bien muestra el mensaje
-                    onRegistrar = {
-                        scope.launch {
-                            if (inventarioViewModel.registrarMovimiento(sesion.usuarioActivo)) {
-                                snackbarHostState.showSnackbar(mensajeRegistrado)
-                            }
-                        }
-                    }
+                    // registrarMovimiento valida (rn-01 rn-04) y si sale bien el evento MovimientoRegistrado muestra el mensaje
+                    onRegistrar = { inventarioViewModel.registrarMovimiento(sesion.usuarioActivo) }
                 )
             }
 

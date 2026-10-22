@@ -2,6 +2,7 @@ package cl.kaiju.kaijuapp.viewmodel
 
 import cl.kaiju.kaijuapp.database.FakeInventarioDao
 import kotlinx.coroutines.flow.first
+import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.model.Usuario
@@ -10,9 +11,10 @@ import cl.kaiju.kaijuapp.repository.InventarioRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.async
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -90,6 +92,26 @@ class InventarioViewModelTest {
     private fun repositorio() = InventarioRepository(
         FakeInventarioDao(listOf(polera, poleron), listOf(administrador, vendedor))
     )
+    // Las operaciones del ViewModel corren en viewModelScope: se lanzan, se deja correr el
+    // dispatcher de prueba y el evento indica si terminaron bien.
+    private fun TestScope.guardar(vm: InventarioViewModel, usuario: Usuario?): Boolean {
+        vm.consumirEvento()
+        vm.guardarProducto(usuario)
+        advanceUntilIdle()
+        return vm.evento.value == EventoUi.ProductoGuardado
+    }
+    private fun TestScope.registrar(vm: InventarioViewModel, usuario: Usuario?): Boolean {
+        vm.consumirEvento()
+        vm.registrarMovimiento(usuario)
+        advanceUntilIdle()
+        return vm.evento.value == EventoUi.MovimientoRegistrado
+    }
+    private fun TestScope.prepararEdicion(vm: InventarioViewModel, codigo: String): Boolean {
+        vm.consumirEvento()
+        vm.prepararEdicionProducto(codigo)
+        advanceUntilIdle()
+        return vm.evento.value == EventoUi.EdicionLista(codigo)
+    }
     private fun completarProducto(vm: InventarioViewModel, codigo: String = "P010") {
         vm.prepararNuevoProducto()
         vm.actualizarCodigo(codigo)
@@ -109,7 +131,7 @@ class InventarioViewModelTest {
         vm.actualizarPrecio("0")
         vm.actualizarStockMinimo("-1")
         vm.actualizarStockActual("1.5")
-        assertFalse(vm.guardarProducto(administrador))
+        assertFalse(guardar(vm, administrador))
         val errores = vm.estadoFormularioProducto.value.errores
         assertNotNull(errores.codigo)
         assertNotNull(errores.nombre)
@@ -125,25 +147,25 @@ class InventarioViewModelTest {
         val repo = repositorio()
         val vm = InventarioViewModel(repo)
         completarProducto(vm)
-        assertFalse(vm.guardarProducto(vendedor))
-        assertTrue(vm.guardarProducto(administrador))
+        assertFalse(guardar(vm, vendedor))
+        assertTrue(guardar(vm, administrador))
         assertEquals(4, repo.buscarProducto("P010")!!.stockActual)
         assertEquals(TipoMovimiento.ENTRADA, repo.movimientos.first().single().tipo)
         assertEquals(administrador.id, repo.movimientos.first().single().usuario)
         completarProducto(vm)
-        assertFalse(vm.guardarProducto(administrador))
+        assertFalse(guardar(vm, administrador))
         assertEquals(3, repo.productos.first().size)
     }
 
     @Test fun editarNoCambiaCodigoNiSobrescribeStockActualizado() = runTest(dispatcher) {
         val repo = repositorio()
         val vm = InventarioViewModel(repo)
-        assertTrue(vm.prepararEdicionProducto("P001"))
+        assertTrue(prepararEdicion(vm, "P001"))
         vm.actualizarCodigo("OTRO")
         vm.actualizarStockActual("99")
         vm.actualizarNombre("Nombre editado")
         repo.registrarMovimiento("P001", TipoMovimiento.SALIDA_VENTA, 2, null, administrador.id, 5, 3)
-        assertTrue(vm.guardarProducto(administrador))
+        assertTrue(guardar(vm, administrador))
         assertEquals("Nombre editado", repo.buscarProducto("P001")!!.nombre)
         assertEquals(3, repo.buscarProducto("P001")!!.stockActual)
         assertEquals(2, repo.productos.first().size)
@@ -155,12 +177,12 @@ class InventarioViewModelTest {
         vm.actualizarProductoMovimiento("P001")
         vm.actualizarTipoMovimiento(TipoMovimiento.SALIDA_VENTA)
         vm.actualizarCantidad("6")
-        assertFalse(vm.registrarMovimiento(vendedor))
+        assertFalse(registrar(vm, vendedor))
         assertNotNull(vm.estadoFormularioMovimiento.value.errores.cantidad)
         assertEquals(5, repo.buscarProducto("P001")!!.stockActual)
         assertTrue(repo.movimientos.first().isEmpty())
         vm.actualizarCantidad("5")
-        assertTrue(vm.registrarMovimiento(vendedor))
+        assertTrue(registrar(vm, vendedor))
         assertEquals(0, repo.buscarProducto("P001")!!.stockActual)
         assertEquals(vendedor.id, repo.movimientos.first().single().usuario)
         assertEquals("", vm.estadoFormularioMovimiento.value.codigoProducto)
@@ -172,15 +194,15 @@ class InventarioViewModelTest {
         vm.actualizarProductoMovimiento("P001")
         vm.actualizarTipoMovimiento(TipoMovimiento.AJUSTE)
         vm.actualizarCantidad("2")
-        assertFalse(vm.registrarMovimiento(administrador))
+        assertFalse(registrar(vm, administrador))
         assertNotNull(vm.estadoFormularioMovimiento.value.errores.motivo)
         assertTrue(repo.movimientos.first().isEmpty())
         vm.actualizarMotivo("  Conteo físico  ")
         vm.actualizarCantidad("-1")
-        assertFalse(vm.registrarMovimiento(administrador))
+        assertFalse(registrar(vm, administrador))
         vm.actualizarCantidad("2")
-        assertFalse(vm.registrarMovimiento(vendedor))
-        assertTrue(vm.registrarMovimiento(administrador))
+        assertFalse(registrar(vm, vendedor))
+        assertTrue(registrar(vm, administrador))
         assertEquals(2, repo.buscarProducto("P001")!!.stockActual)
         assertEquals("Conteo físico", repo.movimientos.first().single().motivo)
     }
@@ -191,13 +213,13 @@ class InventarioViewModelTest {
         vm.actualizarProductoMovimiento("P001")
         vm.actualizarTipoMovimiento(TipoMovimiento.ENTRADA)
         vm.actualizarCantidad("0")
-        assertFalse(vm.registrarMovimiento(administrador))
+        assertFalse(registrar(vm, administrador))
         assertNotNull(vm.estadoFormularioMovimiento.value.errores.cantidad)
         vm.actualizarProductoMovimiento("P001")
         vm.actualizarTipoMovimiento(TipoMovimiento.AJUSTE)
         vm.actualizarCantidad("0")
         vm.actualizarMotivo("Productos dañados")
-        assertTrue(vm.registrarMovimiento(administrador))
+        assertTrue(registrar(vm, administrador))
         assertEquals(0, repo.buscarProducto("P001")!!.stockActual)
         assertEquals(TipoMovimiento.AJUSTE, repo.movimientos.first().single().tipo)
     }
@@ -208,13 +230,13 @@ class InventarioViewModelTest {
         vm.actualizarProductoMovimiento("P001")
         vm.actualizarTipoMovimiento(TipoMovimiento.ENTRADA)
         vm.actualizarCantidad("3")
-        assertFalse(vm.registrarMovimiento(null))
-        assertTrue(vm.registrarMovimiento(administrador))
+        assertFalse(registrar(vm, null))
+        assertTrue(registrar(vm, administrador))
         assertEquals(8, repo.buscarProducto("P001")!!.stockActual)
         vm.actualizarProductoMovimiento("P001")
         vm.actualizarTipoMovimiento(TipoMovimiento.ENTRADA)
         vm.actualizarCantidad(Int.MAX_VALUE.toString())
-        assertFalse(vm.registrarMovimiento(administrador))
+        assertFalse(registrar(vm, administrador))
         assertEquals(8, repo.buscarProducto("P001")!!.stockActual)
         assertEquals(1, repo.movimientos.first().size)
     }
@@ -222,14 +244,14 @@ class InventarioViewModelTest {
     @Test fun movimientoIncompletoONumeroInvalidoNoModificaInventario() = runTest(dispatcher) {
         val repo = repositorio()
         val vm = InventarioViewModel(repo)
-        assertFalse(vm.registrarMovimiento(administrador))
+        assertFalse(registrar(vm, administrador))
         assertNotNull(vm.estadoFormularioMovimiento.value.errores.producto)
         assertNotNull(vm.estadoFormularioMovimiento.value.errores.tipo)
         vm.actualizarProductoMovimiento("P001")
         vm.actualizarTipoMovimiento(TipoMovimiento.SALIDA_CONSUMO)
         for (cantidad in listOf("0", "-1", "1.5", "texto")) {
             vm.actualizarCantidad(cantidad)
-            assertFalse(vm.registrarMovimiento(administrador))
+            assertFalse(registrar(vm, administrador))
         }
         assertEquals(5, repo.buscarProducto("P001")!!.stockActual)
         assertTrue(repo.movimientos.first().isEmpty())
@@ -246,13 +268,17 @@ class InventarioViewModelTest {
         val repo = InventarioRepository(dao)
         val vm = InventarioViewModel(repo)
         completarProducto(vm)
-        val guardado = async { vm.guardarProducto(administrador) }
+        vm.guardarProducto(administrador)
         runCurrent()
-        assertFalse(guardado.isCompleted)
+        assertTrue(vm.guardando.value)
         assertEquals("P010", vm.estadoFormularioProducto.value.codigo)
-        assertFalse(vm.guardarProducto(administrador))
+        vm.guardarProducto(administrador)
+        runCurrent()
+        assertEquals(null, vm.evento.value)
         permitirEscritura.complete(Unit)
-        assertTrue(guardado.await())
+        advanceUntilIdle()
+        assertEquals(EventoUi.ProductoGuardado, vm.evento.value)
+        assertFalse(vm.guardando.value)
         assertEquals("", vm.estadoFormularioProducto.value.codigo)
         assertEquals(1, repo.historialDe("P010").first().size)
     }
@@ -266,7 +292,7 @@ class InventarioViewModelTest {
         val repo = InventarioRepository(dao)
         val vm = InventarioViewModel(repo)
         completarProducto(vm)
-        assertFalse(vm.guardarProducto(administrador))
+        assertFalse(guardar(vm, administrador))
         assertNotNull(vm.errorOperacion.value)
         assertEquals("P010", vm.estadoFormularioProducto.value.codigo)
         assertEquals(1, repo.productos.first().size)

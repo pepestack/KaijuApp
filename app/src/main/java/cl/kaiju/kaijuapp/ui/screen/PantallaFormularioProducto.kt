@@ -51,6 +51,7 @@ import cl.kaiju.kaijuapp.ui.theme.KaijuAppTheme
 fun PantallaFormularioProducto(
     estado: FormularioProductoEstado,
     esEdicion: Boolean,
+    guardando: Boolean,
     categorias: List<String>,
     onCodigoChange: (String) -> Unit,
     onNombreChange: (String) -> Unit,
@@ -168,6 +169,8 @@ fun PantallaFormularioProducto(
             )
             Button(
                 onClick = onGuardar,
+                // desactivado mientras se guarda asi un doble clic no intenta guardar dos veces
+                enabled = !guardando,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp)
@@ -191,6 +194,7 @@ private fun FormularioProductoPreview(estado: FormularioProductoEstado, esEdicio
         PantallaFormularioProducto(
             estado = estado,
             esEdicion = esEdicion,
+            guardando = false,
             categorias = listOf("Poleras", "Polerones"),
             onCodigoChange = {},
             onNombreChange = {},
