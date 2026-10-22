@@ -5,16 +5,19 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import cl.kaiju.kaijuapp.model.CatalogoEstado
+import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.FormularioProductoEstado
 import cl.kaiju.kaijuapp.model.FormularioProductoErrores
 import cl.kaiju.kaijuapp.model.FormularioMovimientoEstado
 import cl.kaiju.kaijuapp.model.FormularioMovimientoErrores
+import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.model.TipoMovimiento
 import cl.kaiju.kaijuapp.model.Usuario
 import cl.kaiju.kaijuapp.repository.InventarioRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,16 +25,31 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class InventarioViewModel(private val repository: InventarioRepository) : ViewModel() {
     val productos = repository.productos.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val usuarios = repository.usuarios.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    private var guardando = false
+    // La vista lo usa para desactivar los botones mientras SQLite escribe.
+    private val _guardando = MutableStateFlow(false)
+    val guardando = _guardando.asStateFlow()
+
+    // Lo que la vista debe hacer una sola vez tras una operación exitosa (navegar o avisar).
+    private val _evento = MutableStateFlow<EventoUi?>(null)
+    val evento = _evento.asStateFlow()
+
+    fun consumirEvento() {
+        _evento.value = null
+    }
+
+    fun errorMostrado() {
+        _errorOperacion.value = null
+    }
 
     // No se confirma ni se limpia el formulario hasta que SQLite termine de guardar.
     private suspend fun ejecutarGuardado(operacion: suspend () -> Boolean): Boolean {
-        if (guardando) return false
-        guardando = true
+        if (_guardando.value) return false
+        _guardando.value = true
         try {
             return operacion()
         } catch (cancelacion: CancellationException) {
@@ -40,7 +58,7 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
             _errorOperacion.value = "No se pudo guardar. Revisa los datos e intenta nuevamente."
             return false
         } finally {
-            guardando = false
+            _guardando.value = false
         }
     }
 
@@ -63,7 +81,14 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         _errorOperacion.value = null
     }
 
-    suspend fun prepararEdicionProducto(codigo: String): Boolean {
+    // Las operaciones corren en viewModelScope: girar o salir de la pantalla no las corta a medias.
+    fun prepararEdicionProducto(codigo: String) {
+        viewModelScope.launch {
+            if (cargarEdicion(codigo)) _evento.value = EventoUi.EdicionLista(codigo)
+        }
+    }
+
+    private suspend fun cargarEdicion(codigo: String): Boolean {
         val producto = repository.buscarProducto(codigo)
         if (producto == null) {
             _errorOperacion.value = "El producto ya no existe"
@@ -107,7 +132,7 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
                 else -> null
             },
             nombre = if (estado.nombre.trim().length < 3) "El nombre debe tener al menos 3 caracteres" else null,
-            categoria = if (estado.categoria !in repository.obtenerProductos().map { it.categoria }) "Elige una categoría de la lista" else null,
+            categoria = if (estado.categoria !in repository.obtenerCategorias()) "Elige una categoría de la lista" else null,
             precio = if ((estado.precio.trim().toIntOrNull() ?: 0) <= 0) "El precio debe ser un entero mayor que cero" else null,
             stockMinimo = validarStock(estado.stockMinimo),
             stockActual = if (_esEdicion.value) null else validarStock(estado.stockActual)
@@ -121,7 +146,13 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         return if (numero == null || numero < 0) "Debe ser un entero mayor o igual a cero" else null
     }
 
-    suspend fun guardarProducto(usuario: Usuario?): Boolean = ejecutarGuardado {
+    fun guardarProducto(usuario: Usuario?) {
+        viewModelScope.launch {
+            if (guardarProductoAhora(usuario)) _evento.value = EventoUi.ProductoGuardado
+        }
+    }
+
+    private suspend fun guardarProductoAhora(usuario: Usuario?): Boolean = ejecutarGuardado {
         val estado = _estadoFormularioProducto.value
         _errorOperacion.value = null
         if (!usuarioValido(usuario) || usuario?.rol != Rol.ADMINISTRADOR) {
@@ -153,6 +184,9 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         prepararNuevoProducto()
         true
     }
+
+    // La pantalla de detalle pide el historial al ViewModel, nunca al repository.
+    fun historialDe(codigo: String): Flow<List<Movimiento>> = repository.historialDe(codigo)
 
     fun limpiarFormularioMovimiento() {
         _estadoFormularioMovimiento.value = FormularioMovimientoEstado()
@@ -191,7 +225,8 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
             },
             cantidad = when {
                 cantidad == null -> "La cantidad debe ser un número entero"
-                cantidad <= 0 -> "La cantidad debe ser mayor que cero"
+                // El ajuste fija el stock contado, así que 0 es válido (todo perdido o dañado).
+                cantidad < 0 || (cantidad == 0 && estado.tipo != TipoMovimiento.AJUSTE) -> "La cantidad debe ser mayor que cero"
                 salida && producto != null && cantidad > producto.stockActual -> "La salida supera el stock disponible"
                 estado.tipo == TipoMovimiento.ENTRADA && producto != null && cantidad.toLong() + producto.stockActual > Int.MAX_VALUE -> "La entrada supera el stock máximo admitido"
                 else -> null
@@ -202,7 +237,13 @@ class InventarioViewModel(private val repository: InventarioRepository) : ViewMo
         return errores == FormularioMovimientoErrores()
     }
 
-    suspend fun registrarMovimiento(usuario: Usuario?): Boolean = ejecutarGuardado {
+    fun registrarMovimiento(usuario: Usuario?) {
+        viewModelScope.launch {
+            if (registrarMovimientoAhora(usuario)) _evento.value = EventoUi.MovimientoRegistrado
+        }
+    }
+
+    private suspend fun registrarMovimientoAhora(usuario: Usuario?): Boolean = ejecutarGuardado {
         val estado = _estadoFormularioMovimiento.value
         _errorOperacion.value = null
         if (!usuarioValido(usuario)) {

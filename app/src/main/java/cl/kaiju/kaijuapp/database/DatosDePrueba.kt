@@ -1,4 +1,4 @@
-package cl.kaiju.kaijuapp.repository
+package cl.kaiju.kaijuapp.database
 
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.Rol

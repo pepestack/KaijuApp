@@ -17,6 +17,10 @@ abstract class InventarioDao {
     @Query("SELECT * FROM movimientos ORDER BY fecha DESC, id DESC")
     abstract fun observarMovimientos(): Flow<List<Movimiento>>
 
+    // SQLite filtra el historial de un producto en vez de traer toda la tabla a memoria.
+    @Query("SELECT * FROM movimientos WHERE codigoProducto = :codigo ORDER BY fecha DESC, id DESC")
+    abstract fun observarHistorial(codigo: String): Flow<List<Movimiento>>
+
     @Query("SELECT * FROM usuarios ORDER BY id")
     abstract fun observarUsuarios(): Flow<List<Usuario>>
 
@@ -25,6 +29,9 @@ abstract class InventarioDao {
 
     @Query("SELECT * FROM productos ORDER BY codigo")
     abstract suspend fun obtenerProductos(): List<Producto>
+
+    @Query("SELECT DISTINCT categoria FROM productos")
+    abstract suspend fun obtenerCategorias(): List<String>
 
     @Query("SELECT * FROM usuarios WHERE id = :id")
     abstract suspend fun buscarUsuario(id: Int): Usuario?

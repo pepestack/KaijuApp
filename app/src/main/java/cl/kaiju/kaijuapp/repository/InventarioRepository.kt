@@ -4,7 +4,6 @@ import cl.kaiju.kaijuapp.database.InventarioDao
 import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.TipoMovimiento
-import kotlinx.coroutines.flow.map
 
 // Room es la fuente de verdad. Los Flow notifican los cambios sin mantener otra lista en memoria.
 class InventarioRepository(private val dao: InventarioDao) {
@@ -13,12 +12,10 @@ class InventarioRepository(private val dao: InventarioDao) {
     val usuarios = dao.observarUsuarios()
 
     suspend fun buscarProducto(codigo: String) = dao.buscarProducto(codigo)
-    suspend fun obtenerProductos() = dao.obtenerProductos()
+    suspend fun obtenerCategorias() = dao.obtenerCategorias()
     suspend fun buscarUsuario(id: Int) = dao.buscarUsuario(id)
 
-    fun historialDe(codigoProducto: String) = movimientos.map { lista ->
-        lista.filter { it.codigoProducto == codigoProducto }
-    }
+    fun historialDe(codigoProducto: String) = dao.observarHistorial(codigoProducto)
 
     // Producto y entrada inicial se confirman juntos; SQLite asigna los IDs de movimientos.
     suspend fun agregarProducto(producto: Producto, usuarioId: Int) {
@@ -34,7 +31,7 @@ class InventarioRepository(private val dao: InventarioDao) {
         producto.tipo, producto.precio, producto.stockMinimo, producto.detalle
     ) == 1
 
-    // El ViewModel calcula el resultado. El DAO verifica que el stock le?do siga vigente.
+    // El ViewModel calcula el resultado. El DAO verifica que el stock leído siga vigente.
     suspend fun registrarMovimiento(
         codigoProducto: String, tipo: TipoMovimiento, cantidad: Int, motivo: String?,
         usuarioId: Int, stockEsperado: Int, nuevoStock: Int

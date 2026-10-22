@@ -36,7 +36,7 @@ import cl.kaiju.kaijuapp.model.FormularioMovimientoErrores
 import cl.kaiju.kaijuapp.model.FormularioMovimientoEstado
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.TipoMovimiento
-import cl.kaiju.kaijuapp.repository.DatosDePrueba
+import cl.kaiju.kaijuapp.database.DatosDePrueba
 import cl.kaiju.kaijuapp.ui.components.CampoFormulario
 import cl.kaiju.kaijuapp.ui.components.SelectorDesplegable
 import cl.kaiju.kaijuapp.ui.components.etiqueta
@@ -52,6 +52,7 @@ fun PantallaMovimiento(
     estado: FormularioMovimientoEstado,
     productos: List<Producto>,
     tiposPermitidos: List<TipoMovimiento>,
+    guardando: Boolean,
     onProductoChange: (String) -> Unit,
     onTipoChange: (TipoMovimiento) -> Unit,
     onCantidadChange: (String) -> Unit,
@@ -144,6 +145,8 @@ fun PantallaMovimiento(
             )
             Button(
                 onClick = onRegistrar,
+                // desactivado mientras se registra asi un doble clic no registra dos veces
+                enabled = !guardando,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp)
@@ -165,6 +168,7 @@ private fun MovimientoPreview(estado: FormularioMovimientoEstado, tiposPermitido
             estado = estado,
             productos = DatosDePrueba.productos,
             tiposPermitidos = tiposPermitidos,
+            guardando = false,
             onProductoChange = {},
             onTipoChange = {},
             onCantidadChange = {},

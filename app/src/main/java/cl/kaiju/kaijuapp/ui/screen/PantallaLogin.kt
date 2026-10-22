@@ -29,7 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.Usuario
-import cl.kaiju.kaijuapp.repository.DatosDePrueba
+import cl.kaiju.kaijuapp.database.DatosDePrueba
 import cl.kaiju.kaijuapp.ui.components.etiqueta
 import cl.kaiju.kaijuapp.ui.theme.KaijuAppTheme
 
