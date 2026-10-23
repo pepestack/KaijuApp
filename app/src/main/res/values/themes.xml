@@ -12,8 +12,8 @@
         <!-- Fondo negro -->
         <item name="windowSplashScreenBackground">@color/kaiju_black</item>
 
-        <!-- Icono -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/necoarc_splash</item>
+        <!-- Icono invisible la animacion del logo vive en PantallaInicio (funciona desde api 24) -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_vacio</item>
 
         <!-- Tema que se aplica después -->
         <item name="postSplashScreenTheme">@style/Theme.KaijuApp</item>

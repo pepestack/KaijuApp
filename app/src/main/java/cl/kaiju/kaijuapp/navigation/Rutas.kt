@@ -11,6 +11,9 @@ sealed class Rutas (val ruta: String) {
     data object Login : Rutas("login")
     data object Alertas : Rutas("alertas")
 
+    // animacion de entrada se muestra una vez al abrir la app y luego pasa al login
+    data object Inicio : Rutas("inicio")
+
     // {codigo} es un hueco obligatorio el patron detalle/{codigo} acepta detalle/P008
     // crearRuta arma el string concreto para que nadie lo escriba a mano
     // Uri.encode escapa / ? & # % del codigo asi la ruta no se rompe y navigation lo decodifica solo
