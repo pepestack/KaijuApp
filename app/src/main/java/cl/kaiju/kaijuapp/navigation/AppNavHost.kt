@@ -49,6 +49,7 @@ import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
 import cl.kaiju.kaijuapp.ui.screen.PantallaCatalogo
 import cl.kaiju.kaijuapp.ui.screen.PantallaDetalleProducto
 import cl.kaiju.kaijuapp.ui.screen.PantallaFormularioProducto
+import cl.kaiju.kaijuapp.ui.screen.PantallaInicio
 import cl.kaiju.kaijuapp.ui.screen.PantallaLogin
 import cl.kaiju.kaijuapp.ui.screen.PantallaMovimiento
 import cl.kaiju.kaijuapp.viewmodel.InventarioViewModel
@@ -162,8 +163,11 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
     // si android mato el proceso en segundo plano al volver restaura la pila (por ejemplo el catalogo)
     // pero el sesionViewModel nace vacio, sin sesion no hay nada que mostrar asi que se vuelve al login
     // rutaActual es null mientras el navhost aun no arma su grafo
+    // la animacion de inicio tampoco tiene sesion pero ella misma lleva al login al terminar
     LaunchedEffect(sesion.usuarioActivo, rutaActual) {
-        if (sesion.usuarioActivo == null && rutaActual != null && rutaActual != Rutas.Login.ruta) {
+        if (sesion.usuarioActivo == null && rutaActual != null &&
+            rutaActual != Rutas.Login.ruta && rutaActual != Rutas.Inicio.ruta
+        ) {
             volverAlLogin(navController)
         }
     }
@@ -187,11 +191,22 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
     ) { inner ->
         NavHost(
             navController = navController,
-            startDestination = Rutas.Login.ruta,
-            // la app parte en el login
+            startDestination = Rutas.Inicio.ruta,
+            // la app parte con la animacion de inicio y luego pasa al login
             // las pantallas tienen su propio scaffold asi no se duplican los margenes de la barra
             modifier = Modifier.padding(inner).consumeWindowInsets(inner)
         ) {
+            composable(Rutas.Inicio.ruta) {
+                PantallaInicio(
+                    onTerminar = {
+                        navController.navigate(Rutas.Login.ruta) {
+                            // saca la animacion de la pila asi atras desde el login no la repite
+                            popUpTo(Rutas.Inicio.ruta) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             // cada composable une una ruta con su pantalla
             composable(Rutas.Login.ruta) {
                 PantallaLogin(
