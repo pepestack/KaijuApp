@@ -1,9 +1,12 @@
 # KaijuApp — Grupo Vio Coders
 
-**Integrantes:** 
-- José Calderón
-- Sebastian Navarro 
-- Sebastian Apablaza
+## Integrantes participantes
+
+| Nombre completo | Correo |
+| --- | --- |
+| José Valentín Calderón González | rjvc97@hotmail.com y jv.calderon@duocuc.cl |
+| Sebastian Andres Apablaza Perez | se.apablazap@duocuc.cl |
+| Sebastian Moises Navarro Gonzales | seba.navarro@duocuc.cl |
 
 **Caso:**
 
