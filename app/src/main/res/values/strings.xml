@@ -100,4 +100,16 @@
         <item quantity="one">Queda %1$d unidad (mínimo %2$d)</item>
         <item quantity="other">Quedan %1$d unidades (mínimo %2$d)</item>
     </plurals>
+
+    <!-- Permiso de notificaciones -->
+    <string name="avisos_titulo">Avisos de stock bajo desactivados</string>
+    <string name="avisos_texto">Actívalos para enterarte cuando un producto quede bajo su mínimo, aunque la app esté cerrada.</string>
+    <string name="avisos_activar">Activar avisos</string>
+    <string name="avisos_abrir_ajustes">Abrir ajustes</string>
+    <string name="avisos_explicacion_titulo">Avisos de stock bajo</string>
+    <string name="avisos_explicacion_texto">Solo te avisamos cuando un producto queda en stock bajo. No enviamos publicidad ni otros mensajes.</string>
+    <string name="avisos_continuar">Continuar</string>
+    <string name="avisos_ahora_no">Ahora no</string>
+    <string name="avisos_activados">Avisos activados</string>
+    <string name="avisos_sin_permiso">Sin avisos: las alertas siguen visibles en esta pestaña</string>
 </resources>

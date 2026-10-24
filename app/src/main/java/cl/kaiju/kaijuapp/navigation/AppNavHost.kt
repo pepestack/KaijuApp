@@ -1,10 +1,5 @@
 package cl.kaiju.kaijuapp.navigation
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,16 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -44,6 +34,7 @@ import androidx.navigation.navArgument
 import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Rol
+import cl.kaiju.kaijuapp.ui.components.AvisoNotificaciones
 import cl.kaiju.kaijuapp.ui.components.rememberEscanerCodigoBarras
 import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
 import cl.kaiju.kaijuapp.ui.screen.PantallaCatalogo
@@ -123,26 +114,14 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
         onError = inventarioViewModel::escaneoFallido
     )
 
+    // el permiso de notificaciones se pide en la pestana alertas que solo ve el encargado y el administrador
+    // asi se pide en contexto y un vendedor no lo rechaza por todos (el permiso es del celular no del usuario)
+    val mensajeAvisosActivados = stringResource(R.string.avisos_activados)
+    val mensajeSinAvisos = stringResource(R.string.avisos_sin_permiso)
+
     // rol del usuario que inicio sesion se usa para mostrar u ocultar cosas
     val rol = sesion.rolActivo
     val esAdmin = rol == Rol.ADMINISTRADOR
-
-    // desde android 13 las notificaciones de stock bajo necesitan permiso y pedirlo requiere la activity por eso va en la vista
-    // el permiso es del celular no del usuario se pide solo a quien ve las alertas para que un vendedor no lo rechace por todos
-    // rememberSaveable evita volver a preguntar en la misma sesion de la app aunque se gire o cambie de usuario
-    val context = LocalContext.current
-    val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-    var permisoPedido by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(rol) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !permisoPedido &&
-            (rol == Rol.ADMINISTRADOR || rol == Rol.ENCARGADO_INVENTARIO) &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            permisoPedido = true
-            pedirPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
 
     // las alertas son solo para el encargado y el administrador (rf-09)
     // si no corresponde el item queda null y listOfNotNull lo descarta
@@ -339,7 +318,15 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                 PantallaAlertas(
                     // productos con stock menor o igual al minimo (rn-06)
                     productos = catalogo.productosEnAlerta,
-                    onProductoClick = { codigo -> navController.navigate(Rutas.Detalle.crearRuta(codigo)) }
+                    onProductoClick = { codigo -> navController.navigate(Rutas.Detalle.crearRuta(codigo)) },
+                    // si dice que no la app sigue y las alertas se siguen viendo en esta pestana
+                    encabezado = { margen ->
+                        AvisoNotificaciones(
+                            modifier = margen,
+                            onConcedido = { scope.launch { snackbarHostState.showSnackbar(mensajeAvisosActivados) } },
+                            onSinPermiso = { scope.launch { snackbarHostState.showSnackbar(mensajeSinAvisos) } }
+                        )
+                    }
                 )
             }
         }
