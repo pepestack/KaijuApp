@@ -20,7 +20,7 @@ Kaiju desarrolla actividades vinculadas al comercio, los servicios y la gestión
 
 | Requerimiento | Funcionalidad |
 | --- | --- |
-| RF-01 | Selección de un usuario de prueba y acceso según su perfil. |
+| RF-01 | Selección de un usuario de prueba y acceso según su perfil con sus distintos privilegios. |
 | RF-02 | Catálogo con nombre, categoría, precio y cantidad disponible. |
 | RF-03 | Búsqueda por nombre o código y filtrado por categoría. |
 | RF-04 | Detalle de productos con historial de movimientos. |
