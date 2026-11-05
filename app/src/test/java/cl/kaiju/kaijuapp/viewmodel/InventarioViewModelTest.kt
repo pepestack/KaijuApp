@@ -87,6 +87,16 @@ class InventarioViewModelTest {
         assertTrue(vm.estadoCatalogo.value.productosEnAlerta.isEmpty())
     }
 
+    @Test fun eventoInformaEntradaConfirmadaAntesDeLimpiarFormulario() = runTest(dispatcher) {
+        val vm = InventarioViewModel(repositorio())
+        vm.actualizarProductoMovimiento("P001")
+        vm.actualizarTipoMovimiento(TipoMovimiento.ENTRADA)
+        vm.actualizarCantidad("67")
+        assertTrue(registrar(vm, administrador))
+        assertEquals(EventoUi.MovimientoRegistrado(TipoMovimiento.ENTRADA, 67), vm.evento.value)
+        assertEquals("", vm.estadoFormularioMovimiento.value.cantidad)
+    }
+
     private val administrador = Usuario(100, "Administrador ficticio", Rol.ADMINISTRADOR)
     private val vendedor = Usuario(101, "Vendedor ficticio", Rol.VENDEDOR)
     private fun repositorio() = InventarioRepository(
@@ -104,7 +114,7 @@ class InventarioViewModelTest {
         vm.consumirEvento()
         vm.registrarMovimiento(usuario)
         advanceUntilIdle()
-        return vm.evento.value == EventoUi.MovimientoRegistrado
+        return vm.evento.value is EventoUi.MovimientoRegistrado
     }
     private fun TestScope.prepararEdicion(vm: InventarioViewModel, codigo: String): Boolean {
         vm.consumirEvento()
