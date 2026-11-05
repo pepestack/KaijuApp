@@ -112,4 +112,14 @@
     <string name="avisos_ahora_no">Ahora no</string>
     <string name="avisos_activados">Avisos activados</string>
     <string name="avisos_sin_permiso">Sin avisos: las alertas siguen visibles en esta pestaña</string>
+    <string name="easter_egg_cargando">Buscando tu mvp...</string>
+    <string name="easter_egg_reintentar">Reintentar</string>
+    <string name="monstruo_titulo">Tu mob es:</string>
+    <string name="monstruo_id">ID: %1$d</string>
+    <string name="monstruo_nivel">Nivel: %1$d</string>
+    <string name="monstruo_raza">Raza: %1$s</string>
+    <string name="monstruo_elemento">Elemento: %1$s</string>
+    <string name="monstruo_vida">Vida: %1$d</string>
+    <string name="monstruo_sin_imagen">Imagen no disponible</string>
+    <string name="monstruo_reintentar_imagen">Reintentar imagen</string>
 </resources>

@@ -1,5 +1,8 @@
 package cl.kaiju.kaijuapp.navigation
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cl.kaiju.kaijuapp.model.TipoMovimiento
+import cl.kaiju.kaijuapp.viewmodel.MonsterViewModel
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -52,7 +55,10 @@ private data class ItemBarra(val ruta: Rutas, val etiqueta: Int, val icono: Imag
 
 // las pantallas no saben nada de viewmodels reciben datos por parametro y avisan eventos con lambdas
 @Composable
-fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
+fun AppNavHost(
+    inventarioFactory: ViewModelProvider.Factory,
+    monsterFactory: ViewModelProvider.Factory
+) {
     // control remoto de la navegacion sabe en que pantalla estas y te mueve entre ellas
     val navController = rememberNavController()
 
@@ -61,6 +67,8 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
     // viewModel() busca uno que ya exista (sobrevive al girar) y solo lo crea si no hay
     // inventarioViewModel necesita la factory porque recibe el repository en su constructor
     // la factory llega desde MainActivity asi el navhost (la vista) nunca toca el repository
+    val monsterViewModel: MonsterViewModel = viewModel(factory = monsterFactory)
+    val monstruo by monsterViewModel.estado.collectAsStateWithLifecycle()
     val sesionViewModel: SesionViewModel = viewModel()
     val inventarioViewModel: InventarioViewModel =
         viewModel(factory = inventarioFactory)
@@ -99,7 +107,15 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
         inventarioViewModel.consumirEvento()
         when (actual) {
             EventoUi.ProductoGuardado -> navController.popBackStack()
-            EventoUi.MovimientoRegistrado -> scope.launch { snackbarHostState.showSnackbar(mensajeRegistrado) }
+            is EventoUi.MovimientoRegistrado -> {
+                scope.launch { snackbarHostState.showSnackbar(mensajeRegistrado) }
+                if (actual.tipo == TipoMovimiento.ENTRADA && actual.cantidad == 67 &&
+                    sesion.usuarioActivo != null &&
+                    navController.currentDestination?.route == Rutas.Movimiento.ruta
+                ) {
+                    monsterViewModel.activar()
+                }
+            }
             is EventoUi.EdicionLista -> navController.navigate(Rutas.Formulario.crearRuta(actual.codigo))
         }
     }
@@ -143,6 +159,14 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
     // pero el sesionViewModel nace vacio, sin sesion no hay nada que mostrar asi que se vuelve al login
     // rutaActual es null mientras el navhost aun no arma su grafo
     // la animacion de inicio tampoco tiene sesion pero ella misma lleva al login al terminar
+    // Cambiar de pestana o volver atras descarta la ficha y cualquier consulta pendiente.
+    // Al rotar, la ruta sigue siendo Movimientos y el ViewModel conserva su estado.
+    LaunchedEffect(sesion.usuarioActivo, rutaActual) {
+        if (sesion.usuarioActivo == null ||
+            (rutaActual != null && rutaActual != Rutas.Movimiento.ruta)
+        ) monsterViewModel.cerrar()
+    }
+
     LaunchedEffect(sesion.usuarioActivo, rutaActual) {
         if (sesion.usuarioActivo == null && rutaActual != null &&
             rutaActual != Rutas.Login.ruta && rutaActual != Rutas.Inicio.ruta
@@ -310,7 +334,11 @@ fun AppNavHost(inventarioFactory: ViewModelProvider.Factory) {
                     onCantidadChange = inventarioViewModel::actualizarCantidad,
                     onMotivoChange = inventarioViewModel::actualizarMotivo,
                     // registrarMovimiento valida (rn-01 rn-04) y si sale bien el evento MovimientoRegistrado muestra el mensaje
-                    onRegistrar = { inventarioViewModel.registrarMovimiento(sesion.usuarioActivo) }
+                    onRegistrar = { inventarioViewModel.registrarMovimiento(sesion.usuarioActivo) },
+                    monstruo = monstruo,
+                    onImagenMonstruoFallida = monsterViewModel::imagenFallida,
+                    onReintentarMonstruo = monsterViewModel::reintentar,
+                    onReintentarImagenMonstruo = monsterViewModel::reintentarImagen
                 )
             }
 

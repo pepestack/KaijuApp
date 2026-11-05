@@ -1,5 +1,6 @@
 package cl.kaiju.kaijuapp
 
+import cl.kaiju.kaijuapp.viewmodel.MonsterViewModel
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -27,7 +28,8 @@ class MainActivity : ComponentActivity() {
                 // asi se le puede pedir el repository unico, que solo se usa para armar la factory del viewmodel
                 val app = application as KaijuApplication
                 AppNavHost(
-                    inventarioFactory = InventarioViewModel.factory(app.repository, app.avisoStock)
+                    inventarioFactory = InventarioViewModel.factory(app.repository, app.avisoStock),
+                    monsterFactory = MonsterViewModel.factory(app.monsterRepository)
                 )
             }
         }

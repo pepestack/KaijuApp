@@ -275,7 +275,7 @@ class InventarioViewModel(
 
     fun registrarMovimiento(usuario: Usuario?) {
         viewModelScope.launch {
-            if (registrarMovimientoAhora(usuario)) _evento.value = EventoUi.MovimientoRegistrado
+            registrarMovimientoAhora(usuario)
         }
     }
 
@@ -305,6 +305,7 @@ class InventarioViewModel(
         val actualizado = producto.copy(stockActual = nuevoStock)
         if (!producto.enAlerta && actualizado.enAlerta) avisoStock.stockBajo(actualizado)
         limpiarFormularioMovimiento()
+        _evento.value = EventoUi.MovimientoRegistrado(tipo, cantidad)
         true
     }
 

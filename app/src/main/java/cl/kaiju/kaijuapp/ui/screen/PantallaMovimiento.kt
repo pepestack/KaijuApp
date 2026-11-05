@@ -37,6 +37,9 @@ import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.FormularioMovimientoErrores
 import cl.kaiju.kaijuapp.model.FormularioMovimientoEstado
 import cl.kaiju.kaijuapp.model.Producto
+import cl.kaiju.kaijuapp.model.MonsterUiState
+import cl.kaiju.kaijuapp.data.model.MonsterDto
+import cl.kaiju.kaijuapp.ui.components.TarjetaMonstruo
 import cl.kaiju.kaijuapp.model.TipoMovimiento
 import cl.kaiju.kaijuapp.database.DatosDePrueba
 import cl.kaiju.kaijuapp.ui.components.CampoFormulario
@@ -61,6 +64,10 @@ fun PantallaMovimiento(
     onCantidadChange: (String) -> Unit,
     onMotivoChange: (String) -> Unit,
     onRegistrar: () -> Unit,
+    monstruo: MonsterUiState,
+    onImagenMonstruoFallida: (String, Int) -> Unit,
+    onReintentarMonstruo: () -> Unit,
+    onReintentarImagenMonstruo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val errores = estado.errores
@@ -172,12 +179,23 @@ fun PantallaMovimiento(
                     modifier = Modifier.padding(start = ButtonDefaults.IconSpacing)
                 )
             }
+            TarjetaMonstruo(
+                estado = monstruo,
+                onImagenFallida = onImagenMonstruoFallida,
+                onReintentar = onReintentarMonstruo,
+                onReintentarImagen = onReintentarImagenMonstruo,
+                modifier = Modifier.padding(top = 16.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun MovimientoPreview(estado: FormularioMovimientoEstado, tiposPermitidos: List<TipoMovimiento>) {
+private fun MovimientoPreview(
+    estado: FormularioMovimientoEstado,
+    tiposPermitidos: List<TipoMovimiento>,
+    monstruo: MonsterUiState = MonsterUiState()
+) {
     KaijuAppTheme {
         PantallaMovimiento(
             estado = estado,
@@ -189,9 +207,26 @@ private fun MovimientoPreview(estado: FormularioMovimientoEstado, tiposPermitido
             onTipoChange = {},
             onCantidadChange = {},
             onMotivoChange = {},
-            onRegistrar = {}
+            onRegistrar = {},
+            monstruo = monstruo,
+            onImagenMonstruoFallida = { _, _ -> },
+            onReintentarMonstruo = {},
+            onReintentarImagenMonstruo = {}
         )
     }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 960)
+@Composable
+private fun PantallaMovimientoConMonstruoPreview() {
+    MovimientoPreview(
+        estado = FormularioMovimientoEstado(),
+        tiposPermitidos = TipoMovimiento.entries,
+        monstruo = MonsterUiState(
+            monstruo = MonsterDto(1002, "Poring", 1, "Plant", "Water 1", 55, ""),
+            errorImagen = true
+        )
+    )
 }
 
 @Preview(showBackground = true, widthDp = 360, heightDp = 640)
