@@ -3,7 +3,9 @@ package cl.kaiju.kaijuapp.navigation
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cl.kaiju.kaijuapp.model.TipoMovimiento
 import cl.kaiju.kaijuapp.viewmodel.MonsterViewModel
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -20,8 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -38,6 +43,7 @@ import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.ui.components.AvisoNotificaciones
+import cl.kaiju.kaijuapp.ui.components.ResultadoMovimientoAnimado
 import cl.kaiju.kaijuapp.ui.components.rememberEscanerCodigoBarras
 import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
 import cl.kaiju.kaijuapp.ui.screen.PantallaCatalogo
@@ -48,6 +54,7 @@ import cl.kaiju.kaijuapp.ui.screen.PantallaLogin
 import cl.kaiju.kaijuapp.ui.screen.PantallaMovimiento
 import cl.kaiju.kaijuapp.viewmodel.InventarioViewModel
 import cl.kaiju.kaijuapp.viewmodel.SesionViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // una pestana de la barra inferior con su ruta su texto y su icono
@@ -91,6 +98,15 @@ fun AppNavHost(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val mensajeRegistrado = stringResource(R.string.movimiento_registrado)
+    // insignia animada del resultado: check al guardar, campana si el producto quedó en alerta
+    var mostrarResultado by remember { mutableStateOf(false) }
+    var resultadoEnAlerta by remember { mutableStateOf(false) }
+    LaunchedEffect(mostrarResultado) {
+        if (mostrarResultado) {
+            delay(1400)
+            mostrarResultado = false
+        }
+    }
     // LaunchedEffect ejecuta el bloque cada vez que errorOperacion cambia si no es null lo muestra
     // al terminar avisa al viewmodel que ya se vio asi no reaparece al girar y el mismo error puede volver a mostrarse
     LaunchedEffect(errorOperacion) {
@@ -109,6 +125,8 @@ fun AppNavHost(
             EventoUi.ProductoGuardado -> navController.popBackStack()
             is EventoUi.MovimientoRegistrado -> {
                 scope.launch { snackbarHostState.showSnackbar(mensajeRegistrado) }
+                resultadoEnAlerta = actual.entroEnAlerta
+                mostrarResultado = true
                 if (actual.tipo == TipoMovimiento.ENTRADA && actual.cantidad == 67 &&
                     sesion.usuarioActivo != null &&
                     navController.currentDestination?.route == Rutas.Movimiento.ruta
@@ -192,12 +210,13 @@ fun AppNavHost(
             }
         }
     ) { inner ->
+        Box(modifier = Modifier.padding(inner).consumeWindowInsets(inner)) {
         NavHost(
             navController = navController,
             startDestination = Rutas.Inicio.ruta,
             // la app parte con la animacion de inicio y luego pasa al login
             // las pantallas tienen su propio scaffold asi no se duplican los margenes de la barra
-            modifier = Modifier.padding(inner).consumeWindowInsets(inner)
+            modifier = Modifier.fillMaxSize()
         ) {
             composable(Rutas.Inicio.ruta) {
                 PantallaInicio(
@@ -357,6 +376,12 @@ fun AppNavHost(
                     }
                 )
             }
+        }
+        ResultadoMovimientoAnimado(
+            visible = mostrarResultado,
+            alerta = resultadoEnAlerta,
+            modifier = Modifier.align(Alignment.Center)
+        )
         }
     }
 }

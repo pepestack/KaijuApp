@@ -79,6 +79,7 @@
     <string name="campo_motivo_opcional">Motivo (opcional)</string>
     <string name="movimiento_registrar">Registrar movimiento</string>
     <string name="movimiento_registrado">Movimiento registrado</string>
+    <string name="resultado_alerta_stock">Stock bajo el mínimo</string>
 
     <!-- Alertas -->
     <string name="alertas_titulo">Alertas de stock</string>

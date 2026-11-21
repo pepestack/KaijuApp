@@ -303,9 +303,10 @@ class InventarioViewModel(
         }
         // Solo se avisa al entrar en alerta; si ya estaba bajo el mínimo no se repite la notificación.
         val actualizado = producto.copy(stockActual = nuevoStock)
-        if (!producto.enAlerta && actualizado.enAlerta) avisoStock.stockBajo(actualizado)
+        val entroEnAlerta = !producto.enAlerta && actualizado.enAlerta
+        if (entroEnAlerta) avisoStock.stockBajo(actualizado)
         limpiarFormularioMovimiento()
-        _evento.value = EventoUi.MovimientoRegistrado(tipo, cantidad)
+        _evento.value = EventoUi.MovimientoRegistrado(tipo, cantidad, entroEnAlerta)
         true
     }
 

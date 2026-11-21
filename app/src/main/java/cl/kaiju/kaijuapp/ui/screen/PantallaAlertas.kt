@@ -69,7 +69,11 @@ fun PantallaAlertas(
                         )
                     }
                     items(productos, key = { it.codigo }) { producto ->
-                        TarjetaProducto(producto = producto, onClick = { onProductoClick(producto.codigo) })
+                        TarjetaProducto(
+                            producto = producto,
+                            onClick = { onProductoClick(producto.codigo) },
+                            modifier = Modifier.animateItem()
+                        )
                     }
                 }
             }
