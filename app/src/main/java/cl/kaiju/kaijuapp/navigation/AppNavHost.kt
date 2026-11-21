@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.EventoUi
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.ui.components.AvisoNotificaciones
+import cl.kaiju.kaijuapp.ui.components.IconoAlertas
 import cl.kaiju.kaijuapp.ui.components.ResultadoMovimientoAnimado
 import cl.kaiju.kaijuapp.ui.components.rememberEscanerCodigoBarras
 import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
@@ -101,6 +103,8 @@ fun AppNavHost(
     // insignia animada del resultado: check al guardar, campana si el producto quedó en alerta
     var mostrarResultado by remember { mutableStateOf(false) }
     var resultadoEnAlerta by remember { mutableStateOf(false) }
+    // cada producto que entra en alerta suma uno y la campana de la barra se balancea
+    var sacudidasAlertas by remember { mutableIntStateOf(0) }
     LaunchedEffect(mostrarResultado) {
         if (mostrarResultado) {
             delay(1400)
@@ -126,6 +130,7 @@ fun AppNavHost(
             is EventoUi.MovimientoRegistrado -> {
                 scope.launch { snackbarHostState.showSnackbar(mensajeRegistrado) }
                 resultadoEnAlerta = actual.entroEnAlerta
+                if (actual.entroEnAlerta) sacudidasAlertas++
                 mostrarResultado = true
                 if (actual.tipo == TipoMovimiento.ENTRADA && actual.cantidad == 67 &&
                     sesion.usuarioActivo != null &&
@@ -202,7 +207,13 @@ fun AppNavHost(
                         NavigationBarItem(
                             selected = rutaActual == item.ruta.ruta,
                             onClick = { navegarAPestana(navController, item.ruta) },
-                            icon = { Icon(item.icono, contentDescription = null) },
+                            icon = {
+                                if (item.ruta == Rutas.Alertas) {
+                                    IconoAlertas(cantidad = catalogo.productosEnAlerta.size, sacudidas = sacudidasAlertas)
+                                } else {
+                                    Icon(item.icono, contentDescription = null)
+                                }
+                            },
                             label = { Text(stringResource(item.etiqueta)) }
                         )
                     }
