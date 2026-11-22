@@ -10,6 +10,10 @@ sealed class Rutas (val ruta: String) {
     data object Catalogo : Rutas("catalogo")
     data object Login : Rutas("login")
     data object Alertas : Rutas("alertas")
+    // gestion de usuarios del backend solo para el administrador
+    data object Usuarios : Rutas("usuarios")
+    // sin argumento el usuarios viewmodel deja listo el formulario (nuevo o edicion) antes de navegar
+    data object FormularioUsuario : Rutas("formulario-usuario")
 
     // animacion de entrada se muestra una vez al abrir la app y luego pasa al login
     data object Inicio : Rutas("inicio")

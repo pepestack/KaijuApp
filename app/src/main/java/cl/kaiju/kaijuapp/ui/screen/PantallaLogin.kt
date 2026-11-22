@@ -1,45 +1,42 @@
 package cl.kaiju.kaijuapp.ui.screen
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cl.kaiju.kaijuapp.R
-import cl.kaiju.kaijuapp.model.Usuario
-import cl.kaiju.kaijuapp.database.DatosDePrueba
-import cl.kaiju.kaijuapp.ui.components.etiqueta
+import cl.kaiju.kaijuapp.model.SesionEstado
+import cl.kaiju.kaijuapp.ui.components.CampoFormulario
 import cl.kaiju.kaijuapp.ui.theme.KaijuAppTheme
 
-/** RF-01. Muestra los usuarios de prueba; validar y abrir la sesión le toca al SesionViewModel. */
+/**
+ * RF-01. Correo y contraseña contra el backend de usuarios. Los errores de formato aparecen bajo
+ * su campo; si las credenciales no coinciden se marcan los dos con un solo mensaje que no dice
+ * cuál falló. El mensaje general queda para fallas de conexión. Validar le toca al SesionViewModel.
+ */
 @Composable
 fun PantallaLogin(
-    usuarios: List<Usuario>,
-    usuarioSeleccionadoId: Int?,
-    error: String?,
-    onSeleccionarUsuario: (Int) -> Unit,
+    estado: SesionEstado,
+    onCorreoChange: (String) -> Unit,
+    onContrasenaChange: (String) -> Unit,
     onIngresar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -63,62 +60,46 @@ fun PantallaLogin(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Column(
-                modifier = Modifier.selectableGroup(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                usuarios.forEach { usuario ->
-                    TarjetaUsuario(
-                        usuario = usuario,
-                        seleccionado = usuario.id == usuarioSeleccionadoId,
-                        onClick = { onSeleccionarUsuario(usuario.id) }
-                    )
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                CampoFormulario(
+                    valor = estado.correo,
+                    onValorChange = onCorreoChange,
+                    etiqueta = stringResource(R.string.campo_correo),
+                    icono = Icons.Filled.Email,
+                    error = estado.errorCorreo,
+                    conError = estado.errorCorreo != null || estado.errorCredenciales != null,
+                    tipoTeclado = KeyboardType.Email,
+                    soloLectura = estado.cargando
+                )
+                CampoFormulario(
+                    valor = estado.contrasena,
+                    onValorChange = onContrasenaChange,
+                    etiqueta = stringResource(R.string.campo_contrasena),
+                    icono = Icons.Filled.Lock,
+                    // el mensaje de credenciales va bajo la contraseña, junto al boton
+                    error = estado.errorContrasena ?: estado.errorCredenciales,
+                    esContrasena = true,
+                    soloLectura = estado.cargando
+                )
             }
-            if (error != null) {
+            if (estado.errorGeneral != null) {
                 Text(
-                    text = error,
+                    text = estado.errorGeneral,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error
                 )
             }
-            Button(onClick = onIngresar, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.login_ingresar))
+            Button(
+                onClick = onIngresar,
+                enabled = !estado.cargando,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (estado.cargando) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(stringResource(R.string.login_ingresar))
+                }
             }
-        }
-    }
-}
-
-@Composable
-private fun TarjetaUsuario(usuario: Usuario, seleccionado: Boolean, onClick: () -> Unit) {
-    val colorAcento = if (seleccionado) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.onSurfaceVariant
-    OutlinedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectable(selected = seleccionado, onClick = onClick, role = Role.RadioButton),
-        border = BorderStroke(
-            width = if (seleccionado) 2.dp else 1.dp,
-            color = if (seleccionado) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.outlineVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(Icons.Filled.AccountCircle, contentDescription = null, tint = colorAcento)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = usuario.nombre, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = usuario.rol.etiqueta(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            // onClick = null: el clic lo maneja la tarjeta completa
-            RadioButton(selected = seleccionado, onClick = null)
         }
     }
 }
@@ -128,10 +109,9 @@ private fun TarjetaUsuario(usuario: Usuario, seleccionado: Boolean, onClick: () 
 private fun PantallaLoginPreview() {
     KaijuAppTheme {
         PantallaLogin(
-            usuarios = DatosDePrueba.usuarios,
-            usuarioSeleccionadoId = 1,
-            error = null,
-            onSeleccionarUsuario = {},
+            estado = SesionEstado(correo = "admin.kaiju@duoc.cl"),
+            onCorreoChange = {},
+            onContrasenaChange = {},
             onIngresar = {}
         )
     }
@@ -142,10 +122,13 @@ private fun PantallaLoginPreview() {
 private fun PantallaLoginErrorPreview() {
     KaijuAppTheme {
         PantallaLogin(
-            usuarios = DatosDePrueba.usuarios,
-            usuarioSeleccionadoId = null,
-            error = "Elige un usuario para ingresar",
-            onSeleccionarUsuario = {},
+            estado = SesionEstado(
+                correo = "nadie@duoc.cl",
+                contrasena = "1234",
+                errorCredenciales = "Correo o contraseña incorrectos"
+            ),
+            onCorreoChange = {},
+            onContrasenaChange = {},
             onIngresar = {}
         )
     }

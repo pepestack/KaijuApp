@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.android.application)
@@ -18,6 +20,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // URL del backend de usuarios: kaiju.api.url en local.properties (no se sube al repo).
+        // Sin ella se usa el backend local visto desde el emulador.
+        val propiedades = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        val urlApi = propiedades.getProperty("kaiju.api.url", "http://10.0.2.2:3000/").trimEnd('/') + "/"
+        buildConfigField("String", "KAIJU_API_URL", "\"$urlApi\"")
     }
 
     buildTypes {
@@ -33,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

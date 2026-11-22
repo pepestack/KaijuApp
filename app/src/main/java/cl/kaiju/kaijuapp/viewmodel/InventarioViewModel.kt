@@ -239,8 +239,10 @@ class InventarioViewModel(
         null -> emptyList()
     }
 
+    // El login copia al usuario del backend en Room. Se compara id y rol, no el nombre, para que
+    // si el administrador edita su propio nombre la sesión abierta siga sirviendo.
     private suspend fun usuarioValido(usuario: Usuario?): Boolean =
-        usuario != null && repository.buscarUsuario(usuario.id) == usuario
+        usuario != null && repository.buscarUsuario(usuario.id)?.rol == usuario.rol
 
     suspend fun validarFormularioMovimiento(usuario: Usuario?): Boolean {
         val estado = _estadoFormularioMovimiento.value
@@ -283,7 +285,7 @@ class InventarioViewModel(
         val estado = _estadoFormularioMovimiento.value
         _errorOperacion.value = null
         if (!usuarioValido(usuario)) {
-            _errorOperacion.value = "Inicia sesión con un usuario de prueba válido"
+            _errorOperacion.value = "Inicia sesión con un usuario válido"
             return@ejecutarGuardado false
         }
         val producto = repository.buscarProducto(estado.codigoProducto)
@@ -303,9 +305,10 @@ class InventarioViewModel(
         }
         // Solo se avisa al entrar en alerta; si ya estaba bajo el mínimo no se repite la notificación.
         val actualizado = producto.copy(stockActual = nuevoStock)
-        if (!producto.enAlerta && actualizado.enAlerta) avisoStock.stockBajo(actualizado)
+        val entroEnAlerta = !producto.enAlerta && actualizado.enAlerta
+        if (entroEnAlerta) avisoStock.stockBajo(actualizado)
         limpiarFormularioMovimiento()
-        _evento.value = EventoUi.MovimientoRegistrado(tipo, cantidad)
+        _evento.value = EventoUi.MovimientoRegistrado(tipo, cantidad, entroEnAlerta)
         true
     }
 
