@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -42,6 +43,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.kaiju.kaijuapp.R
 import cl.kaiju.kaijuapp.model.EventoUi
+import cl.kaiju.kaijuapp.model.EventoUsuarios
 import cl.kaiju.kaijuapp.model.Rol
 import cl.kaiju.kaijuapp.ui.components.AvisoNotificaciones
 import cl.kaiju.kaijuapp.ui.components.IconoAlertas
@@ -51,11 +53,14 @@ import cl.kaiju.kaijuapp.ui.screen.PantallaAlertas
 import cl.kaiju.kaijuapp.ui.screen.PantallaCatalogo
 import cl.kaiju.kaijuapp.ui.screen.PantallaDetalleProducto
 import cl.kaiju.kaijuapp.ui.screen.PantallaFormularioProducto
+import cl.kaiju.kaijuapp.ui.screen.PantallaFormularioUsuario
 import cl.kaiju.kaijuapp.ui.screen.PantallaInicio
 import cl.kaiju.kaijuapp.ui.screen.PantallaLogin
 import cl.kaiju.kaijuapp.ui.screen.PantallaMovimiento
+import cl.kaiju.kaijuapp.ui.screen.PantallaUsuarios
 import cl.kaiju.kaijuapp.viewmodel.InventarioViewModel
 import cl.kaiju.kaijuapp.viewmodel.SesionViewModel
+import cl.kaiju.kaijuapp.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -66,7 +71,9 @@ private data class ItemBarra(val ruta: Rutas, val etiqueta: Int, val icono: Imag
 @Composable
 fun AppNavHost(
     inventarioFactory: ViewModelProvider.Factory,
-    monsterFactory: ViewModelProvider.Factory
+    monsterFactory: ViewModelProvider.Factory,
+    sesionFactory: ViewModelProvider.Factory,
+    usuariosFactory: ViewModelProvider.Factory
 ) {
     // control remoto de la navegacion sabe en que pantalla estas y te mueve entre ellas
     val navController = rememberNavController()
@@ -78,7 +85,9 @@ fun AppNavHost(
     // la factory llega desde MainActivity asi el navhost (la vista) nunca toca el repository
     val monsterViewModel: MonsterViewModel = viewModel(factory = monsterFactory)
     val monstruo by monsterViewModel.estado.collectAsStateWithLifecycle()
-    val sesionViewModel: SesionViewModel = viewModel()
+    // sesion y usuarios hablan con el backend por eso tambien reciben su factory con el repository
+    val sesionViewModel: SesionViewModel = viewModel(factory = sesionFactory)
+    val usuariosViewModel: UsuariosViewModel = viewModel(factory = usuariosFactory)
     val inventarioViewModel: InventarioViewModel =
         viewModel(factory = inventarioFactory)
 
@@ -94,6 +103,11 @@ fun AppNavHost(
     val errorOperacion by inventarioViewModel.errorOperacion.collectAsState()
     val guardando by inventarioViewModel.guardando.collectAsState()
     val evento by inventarioViewModel.evento.collectAsState()
+    val listaUsuarios by usuariosViewModel.lista.collectAsState()
+    val formularioUsuario by usuariosViewModel.formulario.collectAsState()
+    val guardandoUsuario by usuariosViewModel.guardando.collectAsState()
+    val mensajeUsuarios by usuariosViewModel.mensaje.collectAsState()
+    val eventoUsuarios by usuariosViewModel.evento.collectAsState()
 
     // snackbar mensajes cortos abajo de la pantalla para errores del viewmodel y confirmaciones
     // scope lanza el snackbar de confirmacion aparte asi no se corta cuando el evento se consume
@@ -117,6 +131,40 @@ fun AppNavHost(
         errorOperacion?.let {
             snackbarHostState.showSnackbar(it)
             inventarioViewModel.errorMostrado()
+        }
+    }
+
+    // errores del backend que no son de un campo (por ejemplo cambiar el propio rol)
+    LaunchedEffect(mensajeUsuarios) {
+        mensajeUsuarios?.let {
+            snackbarHostState.showSnackbar(it)
+            usuariosViewModel.mensajeMostrado()
+        }
+    }
+
+    val mensajeUsuarioGuardado = stringResource(R.string.usuario_guardado)
+    val mensajeUsuarioEliminado = stringResource(R.string.usuario_eliminado)
+    LaunchedEffect(eventoUsuarios) {
+        val actual = eventoUsuarios ?: return@LaunchedEffect
+        usuariosViewModel.consumirEvento()
+        when (actual) {
+            EventoUsuarios.Guardado -> {
+                navController.popBackStack()
+                scope.launch { snackbarHostState.showSnackbar(mensajeUsuarioGuardado) }
+            }
+            is EventoUsuarios.Eliminado ->
+                scope.launch { snackbarHostState.showSnackbar(mensajeUsuarioEliminado.format(actual.nombre)) }
+        }
+    }
+
+    // el login es asincrono el viewmodel deja el usuario activo cuando el backend responde
+    // solo se navega si todavia se esta en el login asi girar el celular despues no repite nada
+    LaunchedEffect(sesion.usuarioActivo) {
+        if (sesion.usuarioActivo != null && navController.currentDestination?.route == Rutas.Login.ruta) {
+            navController.navigate(Rutas.Catalogo.ruta) {
+                // saca el login de la pila asi el boton atras ya no vuelve a el
+                popUpTo(Rutas.Login.ruta) { inclusive = true }
+            }
         }
     }
 
@@ -169,7 +217,9 @@ fun AppNavHost(
         ItemBarra(Rutas.Movimiento, R.string.nav_movimiento, Icons.Filled.ShoppingCart),
         if (rol == Rol.ADMINISTRADOR || rol == Rol.ENCARGADO_INVENTARIO)
             ItemBarra(Rutas.Alertas, R.string.nav_alertas, Icons.Filled.Notifications)
-        else null
+        else null,
+        // el crud de usuarios del backend es solo del administrador
+        if (esAdmin) ItemBarra(Rutas.Usuarios, R.string.nav_usuarios, Icons.Filled.Person) else null
     )
 
     // ruta de la pantalla actual se usa para marcar la pestana activa
@@ -243,22 +293,11 @@ fun AppNavHost(
             // cada composable une una ruta con su pantalla
             composable(Rutas.Login.ruta) {
                 PantallaLogin(
-                    usuarios = usuarios,
-                    usuarioSeleccionadoId = sesion.usuarioSeleccionado?.id,
-                    error = sesion.errorUsuario,
-                    // la pantalla entrega el id y find busca el usuario completo que pide el viewmodel
-                    onSeleccionarUsuario = { id ->
-                        sesionViewModel.seleccionarUsuario(usuarios.find { it.id == id })
-                    },
-                    // solo navega si el viewmodel dice true la pantalla no decide nada
-                    onIngresar = {
-                        if (sesionViewModel.iniciarSesion()) {
-                            navController.navigate(Rutas.Catalogo.ruta) {
-                                // saca el login de la pila asi el boton atras ya no vuelve a el
-                                popUpTo(Rutas.Login.ruta) { inclusive = true }
-                            }
-                        }
-                    }
+                    estado = sesion,
+                    onCorreoChange = sesionViewModel::actualizarCorreo,
+                    onContrasenaChange = sesionViewModel::actualizarContrasena,
+                    // el viewmodel consulta el backend y al responder bien el LaunchedEffect de arriba navega
+                    onIngresar = sesionViewModel::iniciarSesion
                 )
             }
 
@@ -284,6 +323,7 @@ fun AppNavHost(
                         inventarioViewModel.limpiarFiltros()
                         inventarioViewModel.prepararNuevoProducto()
                         inventarioViewModel.limpiarFormularioMovimiento()
+                        usuariosViewModel.limpiar()
                         sesionViewModel.cerrarSesion()
                         snackbarHostState.currentSnackbarData?.dismiss()
                         volverAlLogin(navController)
@@ -387,6 +427,40 @@ fun AppNavHost(
                     }
                 )
             }
+
+            composable(Rutas.Usuarios.ruta) {
+                // cada vez que se abre la pestana se piden los usuarios al backend asi se ven los cambios
+                LaunchedEffect(Unit) { usuariosViewModel.cargar() }
+                PantallaUsuarios(
+                    estado = listaUsuarios,
+                    usuarioActivoId = sesion.usuarioActivo?.id,
+                    guardando = guardandoUsuario,
+                    onRecargar = usuariosViewModel::cargar,
+                    onNuevo = {
+                        usuariosViewModel.prepararNuevo()
+                        navController.navigate(Rutas.FormularioUsuario.ruta)
+                    },
+                    onEditar = { usuario ->
+                        usuariosViewModel.prepararEdicion(usuario)
+                        navController.navigate(Rutas.FormularioUsuario.ruta)
+                    },
+                    onEliminar = usuariosViewModel::eliminar
+                )
+            }
+
+            composable(Rutas.FormularioUsuario.ruta) {
+                PantallaFormularioUsuario(
+                    estado = formularioUsuario,
+                    guardando = guardandoUsuario,
+                    onNombreChange = usuariosViewModel::actualizarNombre,
+                    onCorreoChange = usuariosViewModel::actualizarCorreo,
+                    onContrasenaChange = usuariosViewModel::actualizarContrasena,
+                    onRolChange = usuariosViewModel::actualizarRol,
+                    // al guardar bien el evento Guardado vuelve a la lista
+                    onGuardar = usuariosViewModel::guardar,
+                    onVolver = { navController.popBackStack() }
+                )
+            }
         }
         ResultadoMovimientoAnimado(
             visible = mostrarResultado,
@@ -401,7 +475,7 @@ fun AppNavHost(
 private fun volverAlLogin(navController: NavHostController) {
     // Descarta también las pilas guardadas al cambiar de pestaña.
     // El siguiente perfil conserva el inventario, pero no la navegación anterior.
-    listOf(Rutas.Catalogo, Rutas.Movimiento, Rutas.Alertas).forEach {
+    listOf(Rutas.Catalogo, Rutas.Movimiento, Rutas.Alertas, Rutas.Usuarios).forEach {
         navController.clearBackStack(it.ruta)
     }
     navController.navigate(Rutas.Login.ruta) {

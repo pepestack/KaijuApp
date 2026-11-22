@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import cl.kaiju.kaijuapp.R
 
 /** Campo de texto con ícono y error visible; el mensaje de error lo decide el ViewModel. */
@@ -25,9 +27,13 @@ fun CampoFormulario(
     modifier: Modifier = Modifier,
     error: String? = null,
     ayuda: String? = null,
+    // Permite marcar el campo en rojo sin mensaje propio (por ejemplo credenciales inválidas).
+    conError: Boolean = error != null,
     tipoTeclado: KeyboardType = KeyboardType.Text,
     soloLectura: Boolean = false,
     lineasMaximas: Int = 1,
+    // Oculta lo escrito y usa el teclado de contraseñas.
+    esContrasena: Boolean = false,
     // Botón opcional al final del campo (por ejemplo escanear); el ícono de error tiene prioridad.
     accion: (@Composable () -> Unit)? = null
 ) {
@@ -38,16 +44,20 @@ fun CampoFormulario(
         modifier = modifier.fillMaxWidth(),
         label = { Text(etiqueta) },
         leadingIcon = { Icon(icono, contentDescription = null) },
-        trailingIcon = if (error != null) {
+        trailingIcon = if (conError) {
             { Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.campo_con_error)) }
         } else accion,
-        isError = error != null,
+        isError = conError,
         supportingText = if (textoApoyo != null) {
             { Text(textoApoyo) }
         } else null,
         readOnly = soloLectura,
+        visualTransformation = if (esContrasena) PasswordVisualTransformation() else VisualTransformation.None,
         singleLine = lineasMaximas == 1,
         maxLines = lineasMaximas,
-        keyboardOptions = KeyboardOptions(keyboardType = tipoTeclado, imeAction = ImeAction.Next)
+        keyboardOptions = KeyboardOptions(
+            keyboardType = if (esContrasena) KeyboardType.Password else tipoTeclado,
+            imeAction = ImeAction.Next
+        )
     )
 }

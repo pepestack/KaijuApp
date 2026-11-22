@@ -2,6 +2,8 @@ package cl.kaiju.kaijuapp
 
 import cl.kaiju.kaijuapp.repository.MonsterRepository
 import cl.kaiju.kaijuapp.data.remote.MonsterApiClient
+import cl.kaiju.kaijuapp.data.remote.UsuarioApiClient
+import cl.kaiju.kaijuapp.repository.UsuarioRepository
 import android.app.Application
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
@@ -21,6 +23,11 @@ class KaijuApplication : Application() {
     // by lazy lo crea recien la primera vez que alguien lo usa y despues devuelve siempre el mismo
     val repository by lazy {
         InventarioRepository(KaijuDatabase.obtenerInstancia(this).inventarioDao())
+    }
+
+    // los usuarios viven en el backend; el dao solo guarda la copia para los nombres del historial
+    val usuarioRepository by lazy {
+        UsuarioRepository(UsuarioApiClient.api, KaijuDatabase.obtenerInstancia(this).inventarioDao())
     }
 
     // Repositorio remoto independiente del inventario y de Room.

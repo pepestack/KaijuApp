@@ -26,6 +26,10 @@ open class FakeInventarioDao(
     override suspend fun obtenerProductos() = productos.value
     override suspend fun obtenerCategorias() = productos.value.map { it.categoria }.distinct()
     override suspend fun buscarUsuario(id: Int) = usuarios.value.find { it.id == id }
+    override suspend fun guardarUsuarios(usuarios: List<Usuario>) {
+        val ids = usuarios.map { it.id }.toSet()
+        this.usuarios.value = (this.usuarios.value.filter { it.id !in ids } + usuarios).sortedBy { it.id }
+    }
 
     override suspend fun insertarProducto(producto: Producto) {
         check(buscarProducto(producto.codigo) == null) { "Código duplicado" }

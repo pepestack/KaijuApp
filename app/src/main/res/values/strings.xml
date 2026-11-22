@@ -22,7 +22,7 @@
 
     <!-- Login -->
     <string name="login_titulo">KaijuApp</string>
-    <string name="login_subtitulo">Inventario de productos. Elige un usuario de prueba para ingresar.</string>
+    <string name="login_subtitulo">Inventario de productos. Ingresa con tu correo y contraseña.</string>
     <string name="login_ingresar">Ingresar</string>
 
     <!-- Catálogo -->
@@ -93,6 +93,31 @@
     <string name="nav_catalogo">Catálogo</string>
     <string name="nav_movimiento">Movimiento</string>
     <string name="nav_alertas">Alertas</string>
+    <string name="nav_usuarios">Usuarios</string>
+
+    <!-- usuarios del backend (solo administrador) -->
+    <string name="campo_correo">Correo</string>
+    <string name="campo_contrasena">Contraseña</string>
+    <string name="campo_contrasena_ayuda">Entre 4 y 10 caracteres</string>
+    <string name="campo_contrasena_ayuda_edicion">Déjala vacía para no cambiarla</string>
+    <string name="campo_rol">Rol</string>
+    <string name="usuarios_titulo">Usuarios</string>
+    <string name="usuarios_recargar">Recargar usuarios</string>
+    <string name="usuarios_nuevo">Nuevo usuario</string>
+    <string name="usuarios_vacio">No hay usuarios activos</string>
+    <string name="usuarios_rol_tu">%1$s · tu cuenta</string>
+    <string name="usuarios_eliminar">Eliminar</string>
+    <string name="usuarios_eliminar_de">Eliminar a %1$s</string>
+    <string name="usuarios_eliminar_titulo">¿Eliminar usuario?</string>
+    <string name="usuarios_eliminar_mensaje">%1$s ya no podrá ingresar. Sus movimientos se conservan en el historial.</string>
+    <string name="usuario_guardado">Usuario guardado</string>
+    <string name="usuario_eliminado">%1$s fue eliminado</string>
+    <string name="formulario_usuario_nuevo">Nuevo usuario</string>
+    <string name="formulario_usuario_editar">Editar usuario</string>
+    <string name="formulario_usuario_crear">Crear usuario</string>
+    <string name="formulario_usuario_guardar">Guardar cambios</string>
+    <string name="reintentar">Reintentar</string>
+    <string name="cancelar">Cancelar</string>
 
     <!-- Notificaciones -->
     <string name="canal_alertas_nombre">Alertas de stock</string>

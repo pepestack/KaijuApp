@@ -10,6 +10,8 @@ import androidx.activity.enableEdgeToEdge
 import cl.kaiju.kaijuapp.navigation.AppNavHost
 import cl.kaiju.kaijuapp.ui.theme.KaijuAppTheme
 import cl.kaiju.kaijuapp.viewmodel.InventarioViewModel
+import cl.kaiju.kaijuapp.viewmodel.SesionViewModel
+import cl.kaiju.kaijuapp.viewmodel.UsuariosViewModel
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 class MainActivity : ComponentActivity() {
@@ -29,7 +31,9 @@ class MainActivity : ComponentActivity() {
                 val app = application as KaijuApplication
                 AppNavHost(
                     inventarioFactory = InventarioViewModel.factory(app.repository, app.avisoStock),
-                    monsterFactory = MonsterViewModel.factory(app.monsterRepository)
+                    monsterFactory = MonsterViewModel.factory(app.monsterRepository),
+                    sesionFactory = SesionViewModel.factory(app.usuarioRepository),
+                    usuariosFactory = UsuariosViewModel.factory(app.usuarioRepository)
                 )
             }
         }

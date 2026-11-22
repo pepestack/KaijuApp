@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import cl.kaiju.kaijuapp.model.Movimiento
 import cl.kaiju.kaijuapp.model.Producto
 import cl.kaiju.kaijuapp.model.Usuario
@@ -38,6 +39,10 @@ abstract class InventarioDao {
 
     @Query("SELECT * FROM usuarios WHERE id = :id")
     abstract suspend fun buscarUsuario(id: Int): Usuario?
+
+    // Copia de los usuarios del backend: actualiza los que ya están y agrega los nuevos.
+    @Upsert
+    abstract suspend fun guardarUsuarios(usuarios: List<Usuario>)
 
     @Insert
     abstract suspend fun insertarProducto(producto: Producto)
