@@ -21,7 +21,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -91,23 +90,24 @@ fun AppNavHost(
     val inventarioViewModel: InventarioViewModel =
         viewModel(factory = inventarioFactory)
 
-    // collectAsState convierte el stateflow en estado que compose observa cuando cambia la pantalla se redibuja
+    // collectAsStateWithLifecycle convierte el stateflow en estado que compose observa cuando cambia la pantalla se redibuja
+    // y deja de observar mientras la app esta en segundo plano (guia 12)
     // by permite usar sesion.algo directo sin escribir .value
-    val sesion by sesionViewModel.estado.collectAsState()
-    val catalogo by inventarioViewModel.estadoCatalogo.collectAsState()
-    val productos by inventarioViewModel.productos.collectAsState()
-    val usuarios by inventarioViewModel.usuarios.collectAsState()
-    val formularioProducto by inventarioViewModel.estadoFormularioProducto.collectAsState()
-    val esEdicion by inventarioViewModel.esEdicion.collectAsState()
-    val formularioMovimiento by inventarioViewModel.estadoFormularioMovimiento.collectAsState()
-    val errorOperacion by inventarioViewModel.errorOperacion.collectAsState()
-    val guardando by inventarioViewModel.guardando.collectAsState()
-    val evento by inventarioViewModel.evento.collectAsState()
-    val listaUsuarios by usuariosViewModel.lista.collectAsState()
-    val formularioUsuario by usuariosViewModel.formulario.collectAsState()
-    val guardandoUsuario by usuariosViewModel.guardando.collectAsState()
-    val mensajeUsuarios by usuariosViewModel.mensaje.collectAsState()
-    val eventoUsuarios by usuariosViewModel.evento.collectAsState()
+    val sesion by sesionViewModel.estado.collectAsStateWithLifecycle()
+    val catalogo by inventarioViewModel.estadoCatalogo.collectAsStateWithLifecycle()
+    val productos by inventarioViewModel.productos.collectAsStateWithLifecycle()
+    val usuarios by inventarioViewModel.usuarios.collectAsStateWithLifecycle()
+    val formularioProducto by inventarioViewModel.estadoFormularioProducto.collectAsStateWithLifecycle()
+    val esEdicion by inventarioViewModel.esEdicion.collectAsStateWithLifecycle()
+    val formularioMovimiento by inventarioViewModel.estadoFormularioMovimiento.collectAsStateWithLifecycle()
+    val errorOperacion by inventarioViewModel.errorOperacion.collectAsStateWithLifecycle()
+    val guardando by inventarioViewModel.guardando.collectAsStateWithLifecycle()
+    val evento by inventarioViewModel.evento.collectAsStateWithLifecycle()
+    val listaUsuarios by usuariosViewModel.lista.collectAsStateWithLifecycle()
+    val formularioUsuario by usuariosViewModel.formulario.collectAsStateWithLifecycle()
+    val guardandoUsuario by usuariosViewModel.guardando.collectAsStateWithLifecycle()
+    val mensajeUsuarios by usuariosViewModel.mensaje.collectAsStateWithLifecycle()
+    val eventoUsuarios by usuariosViewModel.evento.collectAsStateWithLifecycle()
 
     // snackbar mensajes cortos abajo de la pantalla para errores del viewmodel y confirmaciones
     // scope lanza el snackbar de confirmacion aparte asi no se corta cuando el evento se consume
@@ -342,7 +342,7 @@ fun AppNavHost(
                 val producto = productos.find { it.codigo == codigo } ?: return@composable
                 // remember(codigo) crea el flujo del historial una vez por producto y no en cada redibujo
                 val historial by remember(codigo) { inventarioViewModel.historialDe(codigo) }
-                    .collectAsState(initial = emptyList())
+                    .collectAsStateWithLifecycle(initialValue = emptyList())
 
                 PantallaDetalleProducto(
                     producto = producto,
@@ -429,8 +429,10 @@ fun AppNavHost(
             }
 
             composable(Rutas.Usuarios.ruta) {
-                // cada vez que se abre la pestana se piden los usuarios al backend asi se ven los cambios
-                LaunchedEffect(Unit) { usuariosViewModel.cargar() }
+                // la primera vez se piden los usuarios al backend; al rotar o volver del formulario se
+                // reutiliza la lista del viewmodel (ya se actualiza sola al guardar o eliminar)
+                // para traerla de nuevo esta el boton recargar
+                LaunchedEffect(Unit) { usuariosViewModel.cargarSiHaceFalta() }
                 PantallaUsuarios(
                     estado = listaUsuarios,
                     usuarioActivoId = sesion.usuarioActivo?.id,

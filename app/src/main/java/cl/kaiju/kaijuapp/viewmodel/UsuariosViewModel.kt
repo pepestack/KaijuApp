@@ -34,6 +34,8 @@ class UsuariosViewModel(private val repository: UsuarioRepository) : ViewModel()
     val mensaje = _mensaje.asStateFlow()
     private val _evento = MutableStateFlow<EventoUsuarios?>(null)
     val evento = _evento.asStateFlow()
+    // La lista se pide una vez por sesión; después se reutiliza y solo se recarga a pedido.
+    private var listaCargada = false
 
     fun consumirEvento() {
         _evento.value = null
@@ -43,12 +45,17 @@ class UsuariosViewModel(private val repository: UsuarioRepository) : ViewModel()
         _mensaje.value = null
     }
 
+    fun cargarSiHaceFalta() {
+        if (!listaCargada) cargar()
+    }
+
     fun cargar() {
         if (_lista.value.cargando) return
         _lista.update { it.copy(cargando = true, error = null) }
         viewModelScope.launch {
             try {
                 _lista.value = ListaUsuariosEstado(usuarios = repository.listar())
+                listaCargada = true
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -59,6 +66,7 @@ class UsuariosViewModel(private val repository: UsuarioRepository) : ViewModel()
 
     // Al cerrar sesión no queda la lista ni un formulario a medias para el siguiente perfil.
     fun limpiar() {
+        listaCargada = false
         _lista.value = ListaUsuariosEstado()
         _formulario.value = FormularioUsuarioEstado()
         _mensaje.value = null
