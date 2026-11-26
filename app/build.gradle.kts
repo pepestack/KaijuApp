@@ -45,6 +45,10 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        // Kotest corre sobre JUnit Platform: sin esto Gradle no encuentra las pruebas.
+        unitTests.all { it.useJUnitPlatform() }
+    }
 }
 
 dependencies {
@@ -69,6 +73,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.mockk)
+    // Sin el motor vintage, las pruebas JUnit 4 dejan de correr sin avisar.
+    testRuntimeOnly(libs.junit.vintage.engine)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.play.services.code.scanner)
     androidTestImplementation(platform(libs.androidx.compose.bom))
