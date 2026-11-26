@@ -6,7 +6,7 @@
 | --- | --- |
 | José Valentín Calderón González | rjvc97@hotmail.com y jv.calderon@duocuc.cl |
 | Sebastian Andres Apablaza Perez | se.apablazap@duocuc.cl |
-| Sebastian Moises Navarro Gonzales | seba.navarro@duocuc.cl |
+| Sebastian Moises Navarro Gonzales | seba.navarrozales@gmail.com |
 
 **Caso:**
 
