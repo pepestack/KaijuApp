@@ -6,6 +6,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val keystoreProps = Properties()
+val keystoreFile = rootProject.file("keystore.properties")
+if (keystoreFile.exists()) keystoreFile.inputStream().use { keystoreProps.load(it) }
+
+
 android {
     namespace = "cl.kaiju.kaijuapp"
     compileSdk {
@@ -30,13 +35,6 @@ android {
         buildConfigField("String", "KAIJU_API_URL", "\"$urlApi\"")
     }
 
-    buildTypes {
-        release {
-            optimization {
-                enable = false
-            }
-        }
-    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -48,6 +46,25 @@ android {
     testOptions {
         // Kotest corre sobre JUnit Platform: sin esto Gradle no encuentra las pruebas.
         unitTests.all { it.useJUnitPlatform() }
+    }
+
+    signingConfigs {
+        create("release") {
+            if (keystoreProps.isNotEmpty()) {
+                storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (keystoreProps.isNotEmpty()) signingConfig = signingConfigs.getByName("release")
+            optimization {
+                enable = false
+            }
+        }
     }
 }
 
