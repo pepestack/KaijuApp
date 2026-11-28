@@ -1,5 +1,8 @@
 package cl.kaiju.kaijuapp.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -22,10 +25,11 @@ class TarjetaMonstruoTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun muestraErrorDeConexionYPermiteReintentar() {
+    fun muestraErrorDeConexionYAlReintentarPasaACargando() {
         val contexto = InstrumentationRegistry.getInstrumentation().targetContext
         val mensaje = "No se pudo conectar. Revisa internet e intenta nuevamente."
-        val estado = MonsterUiState(error = mensaje)
+        val reintentar = contexto.getString(R.string.easter_egg_reintentar)
+        var estado by mutableStateOf(MonsterUiState(error = mensaje))
         var reintentos = 0
 
         composeRule.setContent {
@@ -33,19 +37,27 @@ class TarjetaMonstruoTest {
                 TarjetaMonstruo(
                     estado = estado,
                     onImagenFallida = { _, _ -> },
-                    onReintentar = { reintentos++ },
+                    // Hace lo mismo que MonsterViewModel al reintentar: carga y borra el error.
+                    onReintentar = {
+                        reintentos++
+                        estado = MonsterUiState(cargando = true)
+                    },
                     onReintentarImagen = {}
                 )
             }
         }
 
         composeRule.onNodeWithText(mensaje).assertIsDisplayed()
-        composeRule.onNodeWithText(contexto.getString(R.string.easter_egg_reintentar))
+        composeRule.onNodeWithText(reintentar)
             .assertIsDisplayed()
             .performClick()
 
         composeRule.runOnIdle {
             assertEquals(1, reintentos)
         }
+        // Mientras carga se ve el aviso y desaparecen el error y el botón.
+        composeRule.onNodeWithText(contexto.getString(R.string.easter_egg_cargando)).assertIsDisplayed()
+        composeRule.onNodeWithText(mensaje).assertDoesNotExist()
+        composeRule.onNodeWithText(reintentar).assertDoesNotExist()
     }
 }
