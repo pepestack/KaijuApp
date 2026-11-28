@@ -250,9 +250,6 @@ Cambiar de pestaña, volver atrás o cerrar sesión limpia la tarjeta y cancela 
 | Consulta mediante HTTPS | Exitosa, HTTP 200 |
 | Ruta inexistente `/api/monster/999999` | HTTP 404 |
 | Parámetro desconocido `apiKey=PRUEBA` | No alteró la respuesta normal |
-| Manejo de errores 429 simulados | Pendiente de verificar |
-| Entrada inválida desde Android | Pendiente |
-| Falla de conexión y reintento desde Android | Pendiente |
 
 La prueba de una ruta inexistente comprueba la respuesta HTTP 404, pero no sustituye por sí sola la validación de una entrada inválida dentro de la aplicación Android.
 
