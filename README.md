@@ -163,7 +163,7 @@ Para ejecutarlas: conectar el dispositivo y hacer clic derecho sobre `cl.kaiju.k
 
 ## APK firmado
 
-La versión release se firma con la llave en `llaves/kaijuapp.jks` (alias `kaiju`). La llave se encuentra en el repositorio por petición del encargo, pero en un proyecto real no debería incluirse (si se quisiera publicar en Google PLay, hay que cambiar esta llave). Las contraseñas **no** se guardan en el repositorio eso si, viven en el `keystore.properties` local (porque está en .gitignore).
+La versión release se firma con la llave en `llaves/kaijuapp.jks` (alias `kaiju`). La llave se encuentra en el repositorio por petición del encargo, pero en un proyecto real no debería incluirse (si se quisiera publicar en Google Play, hay que cambiar esta llave). Las contraseñas **no** se guardan en el repositorio, viven en el `keystore.properties` local (porque está en .gitignore).
 
 - APK firmado: _enlace_
 - Llave de práctica: [`llaves/kaijuapp.jks`](llaves/kaijuapp.jks)
