@@ -140,14 +140,14 @@ Están en `app/src/test` y usan **Kotest**, **MockK** (dobles del Repository y d
 
 | Archivo | Prueba | Qué comprueba |
 | --- | --- | --- |
-| `InventarioViewModelSpec` | RN-01 | Una salida mayor al stock disponible se rechaza y no se guarda nada. |
-| `InventarioViewModelSpec` | RN-04 | Un ajuste sin motivo se rechaza. |
-| `InventarioViewModelSpec` | RF-07 | El vendedor solo puede registrar salidas por venta. |
-| `InventarioViewModelSpec` | RN-02 y RN-03 | Un producto con código repetido y precio cero se rechaza. |
-| `InventarioViewModelSpec` | RF-06 | Una entrada válida suma al stock y llega al Repository una sola vez. |
-| `InventarioViewModelSpec` | RN-06 | Una salida que deja el stock en el mínimo o bajo él avisa una vez. |
-| `CodigoBarrasSpec` | Normalización | Un UPC-A de 12 dígitos se guarda como EAN-13. |
-| `CodigoBarrasSpec` | Dígito verificador | Un código con el dígito verificador incorrecto se rechaza. |
+| `InventarioViewModelSpec` | RN-01 | Una salida mayor al stock disponible se rechaza y no se guarda nada, pero vender exactamente todo el stock sí se permite. |
+| `InventarioViewModelSpec` | RN-04 | Un ajuste sin motivo se rechaza; con motivo fija el stock contado (incluso 0) y guarda el motivo sin espacios sobrantes. |
+| `InventarioViewModelSpec` | RF-07 | El vendedor solo puede registrar salidas por venta: una entrada se rechaza y nunca llega al Repository, y una venta se acepta. |
+| `InventarioViewModelSpec` | RN-02 y RN-03 | Al guardar, un producto con código repetido y precio cero se rechaza, los campos correctos no muestran error y no se guarda nada. |
+| `InventarioViewModelSpec` | RF-06 | Una entrada válida suma al stock y llega al Repository una sola vez; mientras se guarda, el formulario queda bloqueado. |
+| `InventarioViewModelSpec` | RN-06 | Una salida que deja el stock justo en el mínimo avisa una vez, y una salida posterior no repite el aviso. |
+| `CodigoBarrasSpec` | Normalización | Un UPC-A de 12 dígitos se guarda como EAN-13, sin importar espacios al inicio o al final, y un EAN-13 ya normalizado no cambia. |
+| `CodigoBarrasSpec` | Validación | Se rechazan los códigos con dígito verificador incorrecto, con un largo distinto de 12 o 13, con letras o vacíos. |
 
 Para ejecutarlas: panel **Gradle → app → Tasks → verification → testDebugUnitTest**, o clic derecho sobre `cl.kaiju.kaijuapp (test)` → **Run**.
 
@@ -157,7 +157,8 @@ Están en `app/src/androidTest` y se ejecutan en un emulador o teléfono conecta
 
 | Archivo | Qué comprueba |
 | --- | --- |
-| `TarjetaProductoTest` | La tarjeta de un producto con stock bajo muestra su nombre, la cantidad y la marca "Stock bajo", y responde al toque (RF-02, RF-04, RF-09). |
+| `TarjetaProductoTest` | La tarjeta de un producto con el stock justo en el mínimo muestra su nombre, categoría, cantidad y la marca "Stock bajo", y responde al toque. Al subir el stock sobre el mínimo, cambia a "Stock suficiente" (RF-02, RF-04, RF-09, RN-06). |
+| `TarjetaMonstruoTest` | La tarjeta del easter egg muestra el error de conexión y el botón Reintentar; al tocarlo pasa a "Buscando tu mvp..." y desaparecen el error y el botón (API externa). |
 
 Para ejecutarlas: conectar el dispositivo y hacer clic derecho sobre `cl.kaiju.kaijuapp (androidTest)` → **Run**.
 
