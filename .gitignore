@@ -15,3 +15,8 @@
 .cxx
 local.properties
 refs/
+*.jks
+*.keystore
+keystore.properties
+!llaves/kaijuapp.jks
+/app/release/

@@ -163,12 +163,34 @@ Para ejecutarlas: conectar el dispositivo y hacer clic derecho sobre `cl.kaiju.k
 
 ## APK firmado
 
-<!-- PENDIENTE: completar cuando se genere el APK release firmado. -->
+La versión release se firma con la llave en `llaves/kaijuapp.jks` (alias `kaiju`). La llave se encuentra en el repositorio por petición del encargo, pero en un proyecto real no debería incluirse (si se quisiera publicar en Google PLay, hay que cambiar esta llave). Las contraseñas **no** se guardan en el repositorio eso si, viven en el `keystore.properties` local (porque está en .gitignore).
 
-- APK: _pendiente_
-- Llave de práctica (`.jks`): _pendiente_
+- APK firmado: _enlace_
+- Llave de práctica: [`llaves/kaijuapp.jks`](llaves/kaijuapp.jks)
+- Captura del APK firmado y del `.jks`:
 
 _Captura del APK firmado y del `.jks`: pendiente._
+
+### Cómo generar una copia firmada
+
+La app compila y es editable sin estos pasos, pero serán builds debug con firmas locales, no se podrá generar el APK o AAB release firmado a menos de que sigan estos pasos:
+
+1. Copiar `keystore.properties.example` y sacar el `.example`, quedando solo como `keystore.properties`
+2. Reemplazar los dos `CHANGE_ME` por la contraseña de la llave, que solo el equipo tiene, ojo con no dejar espacios.
+3. Revisar la URL del backend: El APK queda con la variable `kaiju.api.url` de `local.properties` del computador que lo compila, si no esta eso la app apunta a `http://10.0.2.2:3000/`, que solo funciona en emulador.
+4. **Compilar** en Android Studio, por la terminal o presionando `Ctrl` dos veces y escribir:
+    - gradle assembleRelease
+    - gradle bundleRelease
+   > El primero es el APK firmado, el segundo el AAB, para Google Play
+
+Resultando en estos archivos:
+
+   | Archivo | Ubicación |                                                                                                                                                                                                  
+   | --- | --- |                                                                                                                                                                                                            
+   | APK firmado | `app/build/outputs/apk/release/app-release.apk` |                                                                                                                                                        
+   | AAB firmado | `app/build/outputs/bundle/release/app-release.aab` |
+
+- Si aparece como `app-release-unsigned.apk`, Gradle no encontró `keystore.properties`: revise que esté en la raíz y que las contraseñas sean correctas.
 
 ## Diseño y planificación
 
